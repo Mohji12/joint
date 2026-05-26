@@ -9,8 +9,8 @@ const Contact = () => {
       icon: Mail,
       title: "Email Us",
       description: "Drop us a line anytime",
-      contact: "contact@jointlly.com",
-      link: "mailto:contact@jointlly.com",
+      contact: "sales@jointlly.com",
+      link: "mailto:sales@jointlly.com",
       color: "from-primary/20 to-primary/10",
       iconColor: "text-primary",
     },
@@ -18,8 +18,8 @@ const Contact = () => {
       icon: Phone,
       title: "Call Us",
       description: "Speak with our team",
-      contact: "+1 (234) 567-890",
-      link: "tel:+1234567890",
+      contact: "+91 9611268009",
+      link: "tel:+919611268009",
       color: "from-accent/20 to-accent/10",
       iconColor: "text-accent",
     },
@@ -27,26 +27,16 @@ const Contact = () => {
       icon: MapPin,
       title: "Visit Our Office",
       description: "Come say hello",
-      contact: "123 Construction Ave, Building City, BC 12345",
+      contact: "Banshankri, Bengaluru",
       link: "#",
       color: "from-primary/20 to-accent/20",
       iconColor: "text-primary",
     },
-    {
-      icon: MessageSquare,
-      title: "Live Chat",
-      description: "Chat with support",
-      contact: "Available 24/7",
-      link: "#",
-      color: "from-accent/20 to-primary/20",
-      iconColor: "text-accent",
-    },
   ];
 
   const businessHours = [
-    { day: "Monday - Friday", hours: "9:00 AM - 6:00 PM" },
-    { day: "Saturday", hours: "10:00 AM - 4:00 PM" },
-    { day: "Sunday", hours: "Closed" },
+    { day: "Monday - Saturday", hours: "9:00 AM - 6:00 PM" },
+    { day: "Sunday", hours: "Off" },
   ];
 
   const socialLinks = [
@@ -59,23 +49,13 @@ const Contact = () => {
   const departments = [
     {
       title: "General Inquiries",
-      email: "info@jointlly.com",
+      email: "sales@jointlly.com",
       description: "Questions about our services",
     },
     {
-      title: "Sales & Partnerships",
-      email: "sales@jointlly.com",
-      description: "Business opportunities",
-    },
-    {
       title: "Support",
-      email: "support@jointlly.com",
+      email: "sales@jointlly.com",
       description: "Technical assistance",
-    },
-    {
-      title: "Press & Media",
-      email: "press@jointlly.com",
-      description: "Media inquiries",
     },
   ];
 
@@ -84,14 +64,14 @@ const Contact = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative pt-32 pb-24 overflow-hidden">
+      <section className="relative pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-20 md:pb-24 overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 via-green-50 to-teal-50/90" />
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-30" />
         
         {/* Glow effects */}
         <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-glow-gradient blur-3xl"
+          className="absolute top-1/4 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full bg-glow-gradient blur-3xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.2, 0.35, 0.2],
@@ -110,10 +90,10 @@ const Contact = () => {
             transition={{ duration: 0.6 }}
             className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6">
               <span className="text-gradient-primary">Contact Us</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed mb-8">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground leading-relaxed mb-6 sm:mb-8 px-2">
               We're here to help! Reach out to us through any of the channels below, 
               and our team will get back to you as soon as possible.
             </p>
@@ -122,11 +102,11 @@ const Contact = () => {
       </section>
 
       {/* Main Contact Methods - Large Cards */}
-      <section className="relative py-12">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      <section className="relative py-8 sm:py-10 md:py-12">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {contactMethods.map((method, index) => {
               const Icon = method.icon;
               return (
@@ -137,18 +117,18 @@ const Contact = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
-                  className="glass-card p-8 hover:scale-105 transition-all duration-300 group relative overflow-hidden"
+                  className="glass-card p-5 sm:p-6 md:p-8 hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 group relative overflow-hidden min-h-[44px]"
                 >
                   {/* Gradient background on hover */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${method.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   
                   <div className="relative z-10">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${method.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className={`w-8 h-8 ${method.iconColor}`} />
+                    <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br ${method.color} flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className={`w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 ${method.iconColor}`} />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">{method.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{method.description}</p>
-                    <p className="text-base font-medium text-primary group-hover:text-accent transition-colors">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">{method.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4">{method.description}</p>
+                    <p className="text-sm sm:text-base font-medium text-primary group-hover:text-accent transition-colors break-words">
                       {method.contact}
                     </p>
                   </div>
@@ -160,26 +140,26 @@ const Contact = () => {
       </section>
 
       {/* Office Location & Business Hours */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      <section className="relative py-12 sm:py-16 md:py-20">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12">
             {/* Office Location */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="glass-card p-8 md:p-12"
+              className="glass-card p-5 sm:p-6 md:p-8 lg:p-12"
             >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                  <Building2 className="w-8 h-8 text-primary" />
+              <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary" />
                 </div>
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">Our Office</h2>
-                  <p className="text-muted-foreground">Visit us at our headquarters</p>
+                <div className="min-w-0">
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Our Office</h2>
+                  <p className="text-sm sm:text-base text-muted-foreground">Visit us at our headquarters</p>
                 </div>
               </div>
 
@@ -189,20 +169,8 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold mb-1">Address</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      123 Construction Avenue<br />
-                      Building City, BC 12345<br />
-                      United States
+                      Banshankri, Bengaluru
                     </p>
-                  </div>
-                </div>
-
-                {/* Map Placeholder */}
-                <div className="w-full h-64 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-glass-border flex items-center justify-center overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
-                  <div className="relative z-10 text-center">
-                    <MapPin className="w-12 h-12 text-primary mx-auto mb-2 opacity-50" />
-                    <p className="text-sm text-muted-foreground">Interactive Map</p>
-                    <p className="text-xs text-muted-foreground/70 mt-1">Map integration available</p>
                   </div>
                 </div>
 
@@ -219,57 +187,57 @@ const Contact = () => {
 
             {/* Business Hours & Quick Contact */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="space-y-6"
+              className="space-y-4 sm:space-y-6"
             >
               {/* Business Hours */}
-              <div className="glass-card p-8 md:p-10">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center">
-                    <Clock className="w-8 h-8 text-accent" />
+              <div className="glass-card p-5 sm:p-6 md:p-8 lg:p-10">
+                <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-accent" />
                   </div>
-                  <div>
-                    <h2 className="text-3xl font-bold mb-2">Business Hours</h2>
-                    <p className="text-muted-foreground">When we're available</p>
+                  <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Business Hours</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground">When we're available</p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-2 sm:space-y-4">
                   {businessHours.map((schedule, index) => (
                     <div
                       key={schedule.day}
-                      className="flex justify-between items-center py-3 border-b border-border/50 last:border-0"
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 py-2.5 sm:py-3 border-b border-border/50 last:border-0"
                     >
-                      <span className="text-foreground font-medium">{schedule.day}</span>
-                      <span className="text-muted-foreground">{schedule.hours}</span>
+                      <span className="text-foreground font-medium text-sm sm:text-base">{schedule.day}</span>
+                      <span className="text-muted-foreground text-sm">{schedule.hours}</span>
                     </div>
                   ))}
                 </div>
 
                 <div className="mt-8 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10">
                   <p className="text-sm text-muted-foreground mb-2">
-                    <strong className="text-foreground">Note:</strong> All times are in EST (Eastern Standard Time)
+                    <strong className="text-foreground">Note:</strong> All times are in IST (Indian Standard Time)
                   </p>
                 </div>
               </div>
 
               {/* Quick Contact Form */}
-              <div className="glass-card p-8 md:p-10">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                    <Send className="w-6 h-6 text-primary" />
+              <div className="glass-card p-5 sm:p-6 md:p-8 lg:p-10">
+                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                    <Send className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">Quick Message</h3>
-                    <p className="text-sm text-muted-foreground">Send us a quick note</p>
+                    <h3 className="text-lg sm:text-xl font-semibold">Quick Message</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Send us a quick note</p>
                   </div>
                 </div>
                 <a
-                  href="mailto:contact@jointlly.com?subject=Quick Inquiry"
-                  className="btn-premium w-full flex items-center justify-center gap-2"
+                  href="mailto:sales@jointlly.com?subject=Quick Inquiry"
+                  className="btn-premium w-full flex items-center justify-center gap-2 min-h-[44px]"
                 >
                   <Mail className="w-5 h-5" />
                   Send Email
@@ -281,26 +249,26 @@ const Contact = () => {
       </section>
 
       {/* Department Contacts */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      <section className="relative py-12 sm:py-16 md:py-20">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               <span className="text-gradient-primary">Department Contacts</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
               Reach out to the right team for faster assistance
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {departments.map((dept, index) => (
               <motion.a
                 key={dept.title}
@@ -309,7 +277,7 @@ const Contact = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="glass-card p-6 hover:scale-105 transition-all duration-300 group"
+                className="glass-card p-4 sm:p-5 md:p-6 hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 group min-h-[44px]"
               >
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Users className="w-6 h-6 text-primary" />
@@ -326,8 +294,8 @@ const Contact = () => {
       </section>
 
       {/* Social Media & Follow Us */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      <section className="relative py-12 sm:py-16 md:py-20">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -335,19 +303,19 @@ const Contact = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="glass-card p-8 md:p-12 text-center"
+            className="glass-card p-5 sm:p-6 md:p-8 lg:p-12 text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                <Globe className="w-8 h-8 text-primary" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                <Globe className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold mb-2">Follow Us</h2>
-                <p className="text-muted-foreground">Stay connected on social media</p>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Follow Us</h2>
+                <p className="text-sm sm:text-base text-muted-foreground">Stay connected on social media</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-4 flex-wrap">
+            <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (
@@ -357,15 +325,15 @@ const Contact = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.label}
-                    className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-glass-border hover:border-primary/30 flex items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 border border-glass-border hover:border-primary/30 flex items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10 min-w-[48px] min-h-[48px]"
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </a>
                 );
               })}
             </div>
 
-            <p className="mt-8 text-sm text-muted-foreground">
+            <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-muted-foreground px-2">
               Join our community for updates, tips, and exclusive content
             </p>
           </motion.div>
@@ -373,8 +341,8 @@ const Contact = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      <section className="relative py-12 sm:py-16 md:py-20">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -382,27 +350,27 @@ const Contact = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="glass-card p-8 md:p-12 text-center bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20"
+            className="glass-card p-5 sm:p-6 md:p-8 lg:p-12 text-center bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20"
           >
-            <Headphones className="w-16 h-16 text-primary mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <Headphones className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-primary mx-auto mb-4 sm:mb-6" />
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
               Still Have Questions?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-1">
               Our support team is available 24/7 to help you with any questions or concerns. 
               Don't hesitate to reach out!
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
               <a
-                href="tel:+1234567890"
-                className="btn-premium flex items-center gap-2"
+                href="tel:+919611268009"
+                className="btn-premium flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <Phone className="w-5 h-5" />
                 Call Now
               </a>
               <a
-                href="mailto:contact@jointlly.com"
-                className="btn-premium-outline flex items-center gap-2"
+                href="mailto:sales@jointlly.com"
+                className="btn-premium-outline flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <Mail className="w-5 h-5" />
                 Email Us

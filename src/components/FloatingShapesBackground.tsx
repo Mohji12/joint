@@ -4,7 +4,7 @@ const FILL = "hsl(160 45% 75% / 0.45)";
 const STROKE = "hsl(160 50% 70% / 0.35)";
 
 const shapes = [
-  // House (roof + body) — top left area
+  // House (roof + body)   top left area
   {
     type: "house",
     left: "8%",

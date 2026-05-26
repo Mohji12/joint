@@ -28,7 +28,10 @@ class User(Base):
         nullable=False,
         index=True
     )
-    is_active = Column(String(10), default="true", nullable=False)
+    # String flag for backwards compat ("true"/"false").
+    is_active = Column(String(10), default="false", nullable=False)
+    avatar_url = Column(String(500), nullable=True)
+    phone = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime,

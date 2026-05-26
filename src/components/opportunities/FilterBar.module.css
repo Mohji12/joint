@@ -1,0 +1,126 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--opp-border, #e5e7eb);
+  border-radius: var(--opp-radius, 12px);
+  background: var(--opp-surface, #fff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.field {
+  flex: 1 1 140px;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldGrow {
+  flex: 2 1 220px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldEnd {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--opp-muted, #6b7280);
+}
+
+.labelSpacer {
+  font-size: 0.6875rem;
+  visibility: hidden;
+}
+
+.select {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--opp-border, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--opp-text, #111827);
+}
+
+.select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rangeRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--opp-match-high, #16a34a);
+  cursor: pointer;
+}
+
+.clearBtn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--opp-text, #111827);
+  background: #f9fafb;
+  border: 1px solid var(--opp-border, #e5e7eb);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.clearBtn:hover {
+  background: #f3f4f6;
+}
+
+.clearBtn:focus-visible {
+  outline: 2px solid var(--opp-match-high, #16a34a);
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .bar {
+    padding: 0.75rem;
+    gap: 0.65rem;
+  }
+
+  .field,
+  .fieldGrow,
+  .fieldEnd {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .select {
+    min-height: 44px;
+    padding: 0.5rem 0.65rem;
+    font-size: max(16px, 0.8125rem);
+  }
+
+  .clearBtn {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+  }
+
+  .range {
+    min-height: 36px;
+  }
+}

@@ -1,6 +1,7 @@
 """
 Custom exception classes and handlers
 """
+import logging
 from typing import Any, Dict
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
@@ -73,7 +74,8 @@ async def validation_exception_handler(
             "message": error["msg"],
             "type": error["type"]
         })
-    
+    logging.warning("Request validation failed: %s %s errors=%s", request.method, request.url.path, errors)
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -115,6 +117,29 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
             "error": True,
             "message": "Database error",
             "detail": error_message
+        }
+    )
+
+
+async def runtime_error_handler(request: Request, exc: RuntimeError) -> JSONResponse:
+    """Handle config/setup RuntimeErrors (e.g. DB or JWT not configured) with 503 and clear message."""
+    msg = str(exc)
+    if "not configured" in msg.lower() or "database" in msg.lower() or "jwt" in msg.lower():
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "error": True,
+                "message": "Service temporarily unavailable",
+                "detail": msg,
+            }
+        )
+    debug = getattr(request.app.state, "settings", None) and getattr(request.app.state.settings, "debug", False)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": True,
+            "message": "Internal server error",
+            "detail": msg if debug else "An error occurred",
         }
     )
 

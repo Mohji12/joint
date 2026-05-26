@@ -1,0 +1,30 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.tier_high {
+  color: var(--opp-match-high, #16a34a);
+  background: color-mix(in srgb, var(--opp-match-high, #16a34a) 12%, white);
+  border-color: color-mix(in srgb, var(--opp-match-high, #16a34a) 35%, white);
+}
+
+.tier_medium {
+  color: var(--opp-match-medium, #f59e0b);
+  background: color-mix(in srgb, var(--opp-match-medium, #f59e0b) 14%, white);
+  border-color: color-mix(in srgb, var(--opp-match-medium, #f59e0b) 40%, white);
+}
+
+.tier_low {
+  color: var(--opp-match-low, #6b7280);
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}

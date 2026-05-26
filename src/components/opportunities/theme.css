@@ -1,0 +1,11 @@
+/* Shared tokens for Opportunities UI (import alongside CSS modules) */
+.opportunitiesTheme {
+  --opp-match-high: #16a34a;
+  --opp-match-medium: #f59e0b;
+  --opp-match-low: #6b7280;
+  --opp-border: #e5e7eb;
+  --opp-surface: #ffffff;
+  --opp-muted: #6b7280;
+  --opp-text: #111827;
+  --opp-radius: 12px;
+}

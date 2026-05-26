@@ -35,6 +35,7 @@ async def create_order(
         order_data.amount,
         order_data.transaction_type,
         order_data.project_id,
+        order_data.match_id,
         order_data.currency
     )
     return order
@@ -56,6 +57,7 @@ async def verify_payment(
     
     # Unlock features if applicable
     await payment_service.unlock_feasibility(db, transaction)
+    await payment_service.unlock_builder_match_selection(db, transaction)
     
     return transaction
 
@@ -80,6 +82,7 @@ async def razorpay_webhook(
     if transaction:
         # Unlock features if applicable
         await payment_service.unlock_feasibility(db, transaction)
+        await payment_service.unlock_builder_match_selection(db, transaction)
     
     return {"status": "success"}
 

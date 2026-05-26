@@ -5,15 +5,16 @@ from uuid import uuid4
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Integer, Float, DateTime, Text, Boolean,
-    ForeignKey, Enum as SQLEnum, ARRAY, Date
+    ForeignKey, Enum as SQLEnum, Date, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.utils.constants import (
     CapabilityType, ProjectType, BusinessEntityType, TeamSizeCategory,
     ProjectSizeCategory as ProjectSizeCategoryEnum, WalletSizeRange, PricingTierType, JVModelType,
     ReconstructionWorkType as ReconstructionWorkTypeEnum, SubcontractorScopeType, OnboardingStatus,
+    BuilderApprovalStatus,
     ProjectIntent
 )
 
@@ -43,7 +44,8 @@ class ProfessionalProfile(Base):
     rera_experience = Column(Boolean, default=False, nullable=False)
     wallet_size = Column(Float, nullable=True)  # In INR
     preferred_jv_model = Column(String(255), nullable=True)
-    location_preferences = Column(ARRAY(String), nullable=True)  # Array of cities/areas
+    # Stored as JSON array for MySQL/Postgres compatibility
+    location_preferences = Column(JSON, nullable=True)  # Array of cities/areas
     workforce_capacity = Column(Integer, nullable=True)
     # New onboarding fields
     business_entity_type = Column(
@@ -67,7 +69,18 @@ class ProfessionalProfile(Base):
         nullable=False,
         index=True
     )
+    approval_status = Column(
+        SQLEnum(BuilderApprovalStatus, name="builder_approval_status"),
+        default=BuilderApprovalStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
+    approval_note = Column(Text, nullable=True)
+    approved_by_admin_user_id = Column(String(32), nullable=True, index=True)
+    approved_at = Column(DateTime, nullable=True)
+    rejected_at = Column(DateTime, nullable=True)
     onboarding_step = Column(Integer, nullable=True, default=1)
+    current_bandwidth = Column(String(50), nullable=True)  # e.g. Immediate, 1-3 months, Booked
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime,
@@ -182,7 +195,8 @@ class Portfolio(Base):
     area_sqft = Column(Float, nullable=True)
     completion_date = Column(Date, nullable=True)
     duration_months = Column(Integer, nullable=True)  # Duration in months
-    images = Column(ARRAY(String), nullable=True)  # Array of image URLs
+    # Stored as JSON array for MySQL/Postgres compatibility
+    images = Column(JSON, nullable=True)  # Array of image URLs
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
@@ -246,6 +260,8 @@ class LocationPreference(Base):
         index=True
     )
     location_name = Column(String(255), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     radius_km = Column(Float, nullable=True)
     capability_type = Column(
         SQLEnum(CapabilityType, name="location_capability_type"),
@@ -397,7 +413,8 @@ class JVJDPreferences(Base):
         nullable=False,
         index=True
     )
-    preferred_jv_models = Column(ARRAY(String), nullable=True)  # Array of JVModelType values
+    # Stored as JSON array for MySQL/Postgres compatibility
+    preferred_jv_models = Column(JSON, nullable=True)  # Array of JVModelType values
     rera_registered_projects_count = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     

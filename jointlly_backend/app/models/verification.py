@@ -5,9 +5,9 @@ from uuid import uuid4
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Float, Integer, Boolean, DateTime,
-    ForeignKey, Enum as SQLEnum, Text
+    ForeignKey, Enum as SQLEnum, Text, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.utils.constants import VerificationStatus

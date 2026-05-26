@@ -25,7 +25,8 @@ from app.utils.constants import (
     PricingTierType, JVModelType, ReconstructionWorkType as ReconstructionWorkTypeEnum,
     SubcontractorScopeType, OnboardingStatus, BusinessEntityType
 )
-from app.exceptions import NotFoundError, ConflictError, ValidationError
+from app.exceptions import AppException, NotFoundError, ConflictError, ValidationError
+from fastapi import status
 from app.services.credibility_service import CredibilityService
 
 
@@ -87,7 +88,10 @@ class ProfessionalService:
         profile = result.scalar_one_or_none()
         
         if not profile:
-            raise NotFoundError("ProfessionalProfile", str(user_id))
+            raise AppException(
+                "No professional profile found for this account. Submit a builder profile (contract, JV, interior, or renovation) to continue.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
         
         return profile
     

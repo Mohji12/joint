@@ -1,143 +1,105 @@
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Building2, Wrench, Zap, ArrowUp, ArrowRight, CheckCircle2, Shield, AlertCircle, DollarSign, Handshake, Hammer, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import industrialVideo from "@/assets/industrial.mp4";
+import industrialHero from "@/assets/industrialhero.png";
 
 const Industrial = () => {
   const components = [
     {
-      icon: Building2,
       title: "Reinforced Concrete Flooring",
       description: "The most critical part of the structure. It is significantly thicker than standard floors to support the weight of heavy machinery and the constant movement of forklifts without cracking.",
     },
     {
-      icon: ArrowUp,
       title: "Large-Span Steel Frames",
-      description: "We use heavy-grade steel beams to create wide, open interior spaces with minimal pillars. This allows for unobstructed assembly lines and massive storage racks.",
+      description: "Heavy-grade steel is used to create beams for wide, open interior spaces with minimal pillars. This allows for unobstructed assembly lines and massive storage racks.",
     },
     {
-      icon: Zap,
       title: "High-Clearance Verticality",
       description: "Structures are built with extreme 'clear heights' (often 30 to 60 feet) to accommodate vertical racking systems and specialized overhead cranes.",
     },
     {
-      icon: Wrench,
       title: "Specialized MEP Systems",
-      description: "The 'veins' of the building—Mechanical, Electrical, and Plumbing—are often exposed and heavy-duty, designed to handle high-voltage power for machines and advanced ventilation for chemical or heat exhaust.",
+      description: "The 'veins' of the building Mechanical, Electrical, and Plumbing are often exposed and heavy-duty, designed to handle high-voltage power for machines and advanced ventilation for chemical or heat exhaust.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
-      
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-24 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 via-green-50 to-teal-50/90" />
-        <div className="absolute inset-0 jointlly-grid opacity-30" />
-        
-        {/* Glow effects */}
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-glow-gradient blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.35, 0.2],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Hero Section */}
+      <section className="relative min-h-[100vh] flex flex-col justify-center pt-24 sm:pt-28 pb-16 sm:pb-24 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${industrialHero})` }}
+        />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="max-w-2xl">
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
+              className="space-y-4 sm:space-y-6"
             >
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                 <span className="text-gradient-primary">Industrial</span>
                 <br />
                 <span className="text-foreground">Construction</span>
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed mb-8">
-                Precision-engineered shells built for heavy-duty performance and massive scale. 
-                Structures engineered to prioritize strength over aesthetics, designed to protect massive machinery and handle extreme physical stress.
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-xl">
+                Precision-engineered shells built for heavy-duty performance and massive scale. Structures engineered to prioritize strength over aesthetics, designed to protect massive machinery and handle extreme physical stress.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/contact" className="btn-premium inline-flex items-center justify-center gap-2">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
+                <Link to="/contact" className="btn-premium inline-flex items-center justify-center gap-2 min-h-[44px]">
                   Get Started
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link to="/landowner" className="btn-premium-outline inline-flex items-center justify-center gap-2">
+                <Link to="/auth" state={{ userType: "landowner", authMode: "login" }} className="btn-premium-outline inline-flex items-center justify-center gap-2 min-h-[44px]">
                   Explore Options
                 </Link>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="glass-card rounded-3xl overflow-hidden aspect-video">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                >
-                  <source src={industrialVideo} type="video/mp4" />
-                </video>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Overview Section */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      {/* What is Industrial   Overview */}
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="glass-card p-8 md:p-12"
+            className="space-y-5 sm:space-y-8"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="text-gradient-primary">Overview</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
+              <span className="text-gradient-primary">What is Industrial</span>
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              In industrial construction, the structure is engineered to prioritize strength over aesthetics. Unlike a house or an office, 
-              an industrial building is essentially a high-performance "shell" designed to protect massive machinery and handle extreme physical stress.
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto px-1">
+              In industrial construction, the structure is engineered to prioritize strength over aesthetics. Unlike a house or an office, an industrial building is essentially a high-performance "shell" designed to protect massive machinery and handle extreme physical stress.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Key Structural Components */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      {/* Key Structural Components   Steps */}
+      <section className="relative py-12 sm:py-16 md:py-20">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-10 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               <span className="text-gradient-primary">Key Structural Components</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -145,335 +107,272 @@ const Industrial = () => {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {components.map((component, index) => {
-              const Icon = component.icon;
-              return (
-                <motion.div
-                  key={component.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="glass-card p-8 hover:scale-105 transition-transform"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-6">
-                    <Icon className="w-8 h-8 text-primary" />
+          <div className="relative">
+            <div className="flex flex-col md:flex-row md:items-stretch gap-0">
+              {components.map((item, index) => {
+                const stepNumber = index + 1;
+                const isLast = index === components.length - 1;
+                return (
+                  <div key={item.title} className="flex flex-col md:flex-row md:flex-1 md:min-w-0 items-center md:items-stretch">
+                    <motion.div
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      className="relative flex flex-col flex-1 text-center md:text-left p-6 md:p-8"
+                    >
+                      <div className="flex justify-center md:justify-start mb-4">
+                        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent text-white font-bold text-xl shadow-lg shadow-primary/25">
+                          {stepNumber}
+                        </div>
+                      </div>
+                      <h3 className="text-xl md:text-2xl font-semibold mb-3 text-foreground min-h-[3.5rem] md:min-h-[4rem]">
+                        {item.title}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed text-sm md:text-base">{item.description}</p>
+                    </motion.div>
+                    {!isLast && (
+                      <div className="hidden md:flex flex-shrink-0 w-8 lg:w-10 self-center justify-center">
+                        <div className="flex items-center gap-0.5 w-full">
+                          <div className="h-0.5 flex-1 bg-gradient-to-r from-primary/50 to-transparent" />
+                          <ArrowRight className="w-5 h-5 text-primary flex-shrink-0" />
+                          <div className="h-0.5 flex-1 bg-gradient-to-l from-accent/50 to-transparent" />
+                        </div>
+                      </div>
+                    )}
+                    {!isLast && (
+                      <div className="flex md:hidden flex-col items-center py-1">
+                        <div className="w-px h-4 bg-primary/40" />
+                        <ArrowRight className="w-5 h-5 text-primary/60 rotate-90" />
+                        <div className="w-px h-4 bg-primary/40" />
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">{component.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{component.description}</p>
-                </motion.div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Common Challenges Section */}
-      <section className="relative py-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32">
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute inset-0 jointlly-grid opacity-40" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-10 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               <span className="text-gradient-primary">Common Challenges</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Property owners face significant hurdles when navigating industrial construction. Here are the most common scenarios and their challenges:
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Industrial projects are high-stakes engineering assets. A minor mistake in flooring, structural loading, or power
+              planning can make a facility unusable. Here is how Jointlly supports owners across three real-world scenarios:
             </p>
           </motion.div>
 
-          <div className="space-y-8">
-            {/* Type 1 */}
+          <div className="space-y-16">
+            {/* Type 1   Greenfield industrial execution */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
-              className="glass-card p-8 md:p-10 border-l-4 border-orange-500"
+              className="relative pl-6 md:pl-8 border-l-2 border-primary/40"
             >
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-7 h-7 text-orange-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-2 text-foreground">
-                    Type 1: Property Owner with Funds but No Construction Expertise
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    If someone owns land and has money to build but lacks construction know-how, options are limited and blind:
-                  </p>
-                </div>
+              <div className="absolute left-0 top-0 w-8 h-8 -translate-x-1/2 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md">
+                1
               </div>
-              <ul className="space-y-3 ml-4 md:ml-6">
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Ask friends or family for referrals based on past experience, handing over the project without vetting the builder firsthand.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Walk into a nearby ongoing construction site with naive expectations.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Endlessly browse online portals and forums hunting for a trustworthy, experienced builder near their property.
-                  </span>
-                </li>
-              </ul>
-              <div className="mt-6 p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                <p className="text-sm text-muted-foreground">
-                  <strong className="text-foreground">The Reality:</strong> There are excellent small-scale or solo builders who deliver honest work with top-quality products and on-time completion at affordable prices—but online searches and social media spotlight only big companies, overshadowing these hidden gems.
-                </p>
-              </div>
-
-              {/* Jointlly's Solution */}
-              <div className="mt-8 pt-8 border-t border-orange-500/20">
-                <h4 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
-                  Jointlly's Role & Solution
+              <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3 mt-1">
+                1. Funded Owner Navigating Industrial Execution (Greenfield Projects)
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-2xl">
+                Building a factory or Grade-A warehouse requires specialized supply chains: pre-engineered buildings (PEB),
+                high-tolerance industrial flooring, and heavy-duty MEP. Many owners accidentally hire standard commercial
+                contractors who cast regular slabs that crack under vertical racking or VNA forklifts, while HT power sanctions
+                and pollution control approvals stall progress.
+              </p>
+              <div className="rounded-xl p-6 md:p-8">
+                <h4 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="font-times">Jointlly</span>'s Role & Solution
                 </h4>
-                <p className="text-muted-foreground mb-4">
-                  Jointlly functions as a decision-enablement and discovery platform, helping owners make more informed shortlisting decisions before engaging independently with any builder.
+                <p className="text-muted-foreground mb-5">
+                  Jointlly functions as a decision-enablement platform tailored for heavy-duty execution, ensuring capital is
+                  directed toward specialized industrial expertise.
                 </p>
-                <p className="text-sm font-semibold text-foreground mb-3">The platform provides:</p>
-                <ul className="space-y-2 mb-4">
+                <p className="text-sm font-semibold text-foreground mb-3">The platform supports owners with:</p>
+                <ul className="space-y-2 mb-5">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      Structured profiles of builders and construction professionals, based on self-disclosed data, past work signals, and market-visible indicators
+                      Specialized contractor discovery with categorized profiles of PEB manufacturers, industrial civil
+                      contractors, and industrial flooring experts (including FM2/FM3-compliant execution).
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      Non-promotional comparisons across parameters such as project type experience, scale alignment, and indicative execution patterns
+                      A layer of checking via self-disclosed and market-visible indicators about past industrial tonnage
+                      handled, clear-height capabilities, and heavy MEP integration.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      Contextual information to help owners ask better technical and commercial questions during their own evaluation
+                      Contextual prompts around soil bearing capacity (SBC) testing, industrial fire compliance, and the role of
+                      specialized industrial architects.
                     </span>
                   </li>
                 </ul>
-                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="p-4 rounded-lg bg-muted/80 border border-border">
                   <p className="text-xs text-muted-foreground">
-                    <strong className="text-foreground">Important:</strong> Jointlly does not recommend, certify, appoint, or supervise builders. It does not validate execution quality or guarantee outcomes. Owners are advised to conduct independent technical, legal, and contractual due diligence before final engagement.
+                    <strong className="text-foreground">Important:</strong> Jointlly does not certify structural integrity or
+                    supervise on-site execution. Owners must conduct rigorous technical due diligence and, where needed, engage
+                    independent project management consultants (PMCs) and licensed structural engineers before final engagement.
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
-                  <strong className="text-foreground">Outcome:</strong> Reduced search opacity and improved decision clarity—without replacing the owner's responsibility or professional advisors.
+                  <strong className="text-foreground">Outcome:</strong> Better alignment between industrial intent and execution
+                  capability, reducing the risk of non-usable floors or under-specified structures.
                 </p>
               </div>
             </motion.div>
 
-            {/* Type 2 */}
+            {/* Type 2   Industrial JV/JD for warehousing & logistics parks */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05 }}
+              viewport={{ once: true }}
+              className="relative pl-6 md:pl-8 border-l-2 border-primary/40"
+            >
+              <div className="absolute left-0 top-0 w-8 h-8 -translate-x-1/2 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md">
+                2
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3 mt-1">
+                2. Landowner Seeking Industrial JV/JD (Warehousing & Logistics Parks)
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-2xl">
+                Highway-corridor land can support high-yield logistics parks, yet many intermediaries push low-clearance shed
+                developments that underperform. Without visibility into industrial zoning, FAR, and Grade-A warehousing norms,
+                landowners often accept suboptimal proposals and long-term rentals.
+              </p>
+              <div className="rounded-xl p-6 md:p-8">
+                <h4 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="font-times">Jointlly</span>'s Role & Solution
+                </h4>
+                <p className="text-muted-foreground mb-5">
+                  Jointlly acts as a neutral information and matching facilitator, equipping landowners to understand the true
+                  yield potential of their industrial land before engaging developers.
+                </p>
+                <p className="text-sm font-semibold text-foreground mb-3">The platform provides:</p>
+                <ul className="space-y-2 mb-5">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      Regulatory and yield visibility via indicative context on industrial zoning (such as yellow/purple zones)
+                      and the differences between Grade-A and Grade-B infrastructure.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      Neutral partner discovery, connecting landowners with developers who have a track record in building and
+                      leasing industrial parks, with access gated by a client platform access fee to ensure serious intent.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      Comparable, high-level examples of industrial JV/JD models (such as built-to-suit leases versus revenue
+                      share) to improve conceptual understanding only.
+                    </span>
+                  </li>
+                </ul>
+                <div className="p-4 rounded-lg bg-muted/80 border border-border">
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">Important:</strong> Jointlly does not value land, calculate industrial
+                    yield, or advise on deal terms. All land conversions, valuations, leases, and JD agreements must be
+                    independently assessed by specialized industrial real-estate, legal, and financial advisors.
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">
+                  <strong className="text-foreground">Outcome:</strong> Better-informed exploration of industrial JV/JD options,
+                  with reduced dependence on opaque intermediaries and clearer expectations about long-term yield potential.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Type 3   Industrial retrofitting & capacity expansion */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
-              className="glass-card p-8 md:p-10 border-l-4 border-blue-500"
+              className="relative pl-6 md:pl-8 border-l-2 border-primary/40"
             >
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                  <Handshake className="w-7 h-7 text-blue-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-2 text-foreground">
-                    Type 2: Property Owner Seeking Revenue via Joint Venture/Development (JV/JD)
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    For owners without full funds who want revenue or a higher-value constructed property through JV/JD, finding a reliable builder is a gamble:
-                  </p>
-                </div>
+              <div className="absolute left-0 top-0 w-8 h-8 -translate-x-1/2 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-md">
+                3
               </div>
-              <ul className="space-y-3 ml-4 md:ml-6">
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Rely on brokers or mediators (charging 2-3% commissions in Bangalore), where the landowner pays half (or full) upfront based on urgency—yet remains unsure about work quality, timelines, or key government laws. Brokers often push builders who pay them higher kickbacks, sidelining better-quality options that won't pay extra.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Cold-call builders online, who often lowball the property value with flimsy excuses, hide critical rules like FAR, height restrictions, setbacks, and bylaws (to tweak plans in their favor, risking deviations during Construction Certificate approval).
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    No dedicated websites or apps exist just for JD/JV—online marketplaces focus only on buy/sell or rentals.
-                  </span>
-                </li>
-              </ul>
-
-              {/* Jointlly's Solution */}
-              <div className="mt-8 pt-8 border-t border-blue-500/20">
-                <h4 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
-                  Jointlly's Role & Solution
+              <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3 mt-1">
+                3. Industrial Retrofitting & Capacity Expansion (Brownfield Projects)
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-2xl">
+                Expanding a live factory adding EOT cranes, mezzanines, or heavier machinery is complex and risk-prone.
+                Unvetted contractors may weld extra members or modify columns without dynamic load analysis, risking structural
+                failure once equipment is commissioned.
+              </p>
+              <div className="rounded-xl p-6 md:p-8">
+                <h4 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="font-times">Jointlly</span>'s Role & Solution
                 </h4>
-                <p className="text-muted-foreground mb-4">
-                  Jointlly acts as a neutral information and matching facilitator, enabling landowners to understand development possibilities and partner profiles before entering discussions.
+                <p className="text-muted-foreground mb-5">
+                  Jointlly provides a specialized discovery layer to identify professionals equipped for high-risk industrial
+                  modifications while minimizing operational disruption.
                 </p>
-                <p className="text-sm font-semibold text-foreground mb-3">The platform provides:</p>
-                <ul className="space-y-2 mb-4">
+                <p className="text-sm font-semibold text-foreground mb-3">The platform enables:</p>
+                <ul className="space-y-2 mb-5">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      Indicative regulatory context (such as FAR ranges, zoning references, and high-level planning constraints) sourced from publicly available government frameworks
+                      Categorized discovery of professionals experienced in industrial retrofitting, structural strengthening, and
+                      heavy MEP upgrades.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      Structured partner discovery based on stated development preferences, project scale alignment, and prior JV/JD participation signals
+                      Experience indicators and disclosures about executing within live, operational factories where safety,
+                      downtime, and phasing are critical.
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">
-                      Comparable high-level deal structures (illustrative only) to improve conceptual understanding—not legal or financial advice
+                      Information prompts that nudge owners to engage licensed industrial structural engineers, perform dynamic
+                      load testing, and secure revised approvals from factory inspectorates and other authorities.
                     </span>
                   </li>
                 </ul>
-                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    <strong className="text-foreground">Jointlly does not:</strong>
-                  </p>
-                  <ul className="space-y-1 ml-4">
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Value land or projects</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Advise on deal terms</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Negotiate, mediate, or conclude agreements</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Replace legal, financial, or planning consultants</span>
-                    </li>
-                  </ul>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    All JV/JD decisions, valuations, approvals, and agreements must be independently assessed by qualified professionals.
+                <div className="p-4 rounded-lg bg-muted/80 border border-border">
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">Important:</strong> Jointlly does not validate structural safety, approve
+                    modifications, or replace statutory authorities. Facility owners remain fully responsible for compliance,
+                    worker safety, and structural integrity.
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
-                  <strong className="text-foreground">Outcome:</strong> Better-informed partner exploration with reduced dependence on opaque intermediaries—while preserving full owner control and accountability.
+                  <strong className="text-foreground">Outcome:</strong> More informed selection of retrofitting partners and
+                  clearer awareness of the technical checks required before expanding capacity.
                 </p>
-              </div>
-            </motion.div>
-
-            {/* Type 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="glass-card p-8 md:p-10 border-l-4 border-purple-500"
-            >
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center flex-shrink-0">
-                  <Hammer className="w-7 h-7 text-purple-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-2 text-foreground">
-                    Type 3: House/Flat Owner Needing Partial Reconstruction
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Renovating part of an existing house or flat often means settling for unvetted small-scale operators:
-                  </p>
-                </div>
-              </div>
-              <ul className="space-y-3 ml-4 md:ml-6">
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Ask nearby under-construction workers, who may override engineers for quick cash—lacking real expertise in load-bearing beams/columns, they alter walls or add weight to slab roofs without support, causing major structural damage.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground">
-                    Turn to a "known circle" builder, who exploits the trust to charge inflated prices, hiking overall costs and leaving the owner at a loss.
-                  </span>
-                </li>
-              </ul>
-
-              {/* Jointlly's Solution */}
-              <div className="mt-8 pt-8 border-t border-purple-500/20">
-                <h4 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
-                  Jointlly's Role & Solution
-                </h4>
-                <p className="text-muted-foreground mb-4">
-                  Jointlly provides a discovery and filtering layer to help owners identify professionals whose declared experience aligns with the stated nature of work.
-                </p>
-                <p className="text-sm font-semibold text-foreground mb-3">The platform enables:</p>
-                <ul className="space-y-2 mb-4">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      Categorized discovery of professionals based on renovation type (non-structural, interior-only, structural modification, etc.)
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      Experience indicators and scope disclosures shared by professionals to help owners assess relevance
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      Information prompts that encourage owners to seek structural engineers, approvals, and drawings where applicable
-                    </span>
-                  </li>
-                </ul>
-                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    <strong className="text-foreground">Jointlly does not:</strong>
-                  </p>
-                  <ul className="space-y-1 ml-4">
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Approve structural changes</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Validate technical safety</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Replace engineers, architects, or statutory authorities</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <XCircle className="w-3 h-3 text-amber-500 mt-1 flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">Supervise on-site work</span>
-                    </li>
-                  </ul>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Owners remain fully responsible for ensuring compliance with building laws, society rules, and local authority approvals.
-                  </p>
-                </div>
               </div>
             </motion.div>
           </div>

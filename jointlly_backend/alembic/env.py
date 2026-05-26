@@ -22,8 +22,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Set SQLAlchemy URL from settings
-config.set_main_option("sqlalchemy.url", settings.database_url_sync)
+# Set SQLAlchemy URL from settings (escape % for ConfigParser, e.g. %23 in password)
+_db_url = settings.database_url_sync
+if _db_url:
+    if "%" in _db_url:
+        _db_url = _db_url.replace("%", "%%")
+    config.set_main_option("sqlalchemy.url", _db_url)
+# When database_url not set (e.g. Lambda), sqlalchemy.url stays from alembic.ini if present
 
 # target_metadata for 'autogenerate' support
 target_metadata = Base.metadata

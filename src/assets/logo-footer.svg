@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 56" width="280" height="56">
+  <!-- Jointlly Footer Logo -->
+  <!-- Use on: dark footer backgrounds (#1A2E1A or #1A5C35) -->
+  <!-- Background: transparent -->
+
+  <!-- J-LEFT: White -->
+  <rect x="8" y="8"  width="15" height="30" rx="2" fill="white" opacity="0.88"/>
+  <rect x="8" y="5"  width="6"  height="7"  rx="1" fill="white" opacity="0.7"/>
+  <path d="M15 38 Q15 48 10 50 Q5 52 3 45 Q1 40 3 37"
+        fill="none" stroke="white" stroke-width="13" stroke-linecap="round" opacity="0.88"/>
+
+  <!-- J-RIGHT: Gold -->
+  <rect x="23" y="5"  width="15" height="33" rx="2" fill="#C9952A"/>
+  <rect x="23" y="2"  width="6"  height="7"  rx="1" fill="#C9952A"/>
+  <path d="M30 38 Q30 49 25 51 Q20 53 18 46 Q16 41 18 38"
+        fill="none" stroke="#C9952A" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- Overlap -->
+  <rect x="23" y="8" width="7" height="30" rx="0" fill="#0D2B18"/>
+
+  <!-- Wordmark -->
+  <text x="46" y="36"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="24" font-weight="300" letter-spacing="1.5"
+    fill="white" opacity="0.9">jointlly</text>
+
+  <!-- Tagline -->
+  <text x="46" y="50"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="9" font-weight="400" letter-spacing="3"
+    fill="#C9952A" opacity="0.75">LAND · BUILD · TRUST</text>
+</svg>

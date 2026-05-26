@@ -5,9 +5,9 @@ from uuid import uuid4
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Float, DateTime, ForeignKey,
-    Enum as SQLEnum, Text
+    Enum as SQLEnum, Text, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.utils.constants import TransactionType, TransactionStatus
@@ -36,6 +36,12 @@ class Transaction(Base):
         nullable=True,
         index=True
     )
+    match_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("matches.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
     transaction_type = Column(
         SQLEnum(TransactionType, name="transaction_type"),
         nullable=False,
@@ -52,6 +58,9 @@ class Transaction(Base):
         nullable=False,
         index=True
     )
+    # Admin-only resolution metadata (does not trigger real refunds in Razorpay).
+    admin_resolution_status = Column(String(20), nullable=True, index=True)
+    admin_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime,
@@ -63,6 +72,7 @@ class Transaction(Base):
     # Relationships
     user = relationship("User", backref="transactions")
     project = relationship("Project", back_populates="transactions")
+    match = relationship("Match", back_populates="transactions")
     payments = relationship("Payment", back_populates="transaction", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:

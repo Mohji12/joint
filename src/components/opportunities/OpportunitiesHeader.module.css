@@ -1,0 +1,53 @@
+.wrap {
+  padding: 0.25rem 0 0.5rem;
+}
+
+.eyebrowRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--opp-match-high, #16a34a);
+  background: color-mix(in srgb, var(--opp-match-high, #16a34a) 10%, white);
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.count {
+  font-size: 0.75rem;
+  color: var(--opp-muted, #6b7280);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--opp-text, #111827);
+  line-height: 1.25;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1.5rem;
+  }
+}
+
+.description {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--opp-muted, #6b7280);
+  max-width: 42rem;
+}

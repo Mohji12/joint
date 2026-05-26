@@ -15,6 +15,8 @@ from app.utils.constants import (
 class LocationPreferenceCreate(BaseModel):
     """Location preference with radius"""
     location_name: str = Field(..., min_length=1, max_length=255)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     radius_km: Optional[float] = Field(None, gt=0)
     capability_type: Optional[CapabilityType] = None
     

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { FileText, Building2, Shield, Eye, Cookie, Lock, UserCheck, Gavel, Mail, MapPin } from "lucide-react";
+import { FileText, Building2, Shield, Eye, Cookie, Lock, UserCheck, Gavel, Mail, MapPin, Clock } from "lucide-react";
 
 const Privacy = () => {
   const sections = [
@@ -15,11 +15,11 @@ const Privacy = () => {
         },
         {
           label: "b) Proprietorship",
-          content: 'The domain name www.jointlly.in ("Website") and the Jointlly Mobile Application are owned and operated by Jointlly Tech Pvt Ltd, a company incorporated under the Companies Act, 2013, with its registered office in Bengaluru, Karnataka.',
+          content: 'The domain name www.jointlly.in ("Website") and the Jointlly Mobile Application are owned and operated by Jointlly Pvt Ltd, a company incorporated under the Companies Act, 2013, with its registered office in Bengaluru, Karnataka.',
         },
         {
-          label: "c) Compliance",
-          content: "This Policy is published in accordance with Rule 3 (1) of the Information Technology (Intermediaries guidelines) Rules, 2011 and the DPDP Act 2023, which require the publication of a Privacy Policy for access or usage of the Platform.",
+          label: "c) Compliance Statement",
+          content: "This Policy is published in accordance with Rule 3(1) of the Information Technology (Intermediaries Guidelines) Rules, 2011, and the mandates of the DPDP Act 2023, which require the publication of a Privacy Policy for access or usage of the Platform.",
         },
       ],
     },
@@ -29,15 +29,20 @@ const Privacy = () => {
       items: [
         {
           label: "a) Affirmative Consent",
-          content: 'By using the Website and providing information, the User provides clear affirmative consent to Jointlly Pvt Ltd (the "Data Fiduciary") to collect and process personal data for the purposes of matchmaking.',
+          content: 'By using the Website and providing information, the User provides clear, affirmative consent to Jointlly Pvt Ltd (the "Data Fiduciary") to collect and process personal data for the specific purposes outlined below.',
         },
         {
-          label: "b) Information Collected",
-          content: "We collect information provided by you, including but not limited to: Name, Phone Number, Email, Property ID (PID), Property Location, Plot Size, and project preferences.",
+          label: "b) Information We Collect",
+          content: "We collect verified information provided by you, including but not limited to:",
+          details: [
+            "Identity Data: Name, Phone Number, Email Address.",
+            "Technical Property Data: Property ID (PID), Survey Number, Property Location (Geo-coordinates), Plot Size (sq. ft.), Road Width, and Project Requirements.",
+            "Financial Data: Payment transaction references (Note: We do not store full credit/debit card numbers).",
+          ],
         },
         {
           label: "c) Automatic Tracking",
-          content: "We may automatically track information based on your IP address and behavior on the Website to improve safety and user experience. This includes browser information and URL navigation history.",
+          content: "We may automatically track information based on your IP address and behavior on the Website to improve safety and user experience. This includes browser information, device type, and URL navigation history to detect fraudulent bot activity.",
         },
       ],
     },
@@ -46,44 +51,80 @@ const Privacy = () => {
       title: "3. PURPOSE OF PROCESSING & DATA SHARING",
       items: [
         {
-          label: "a) Matchmaking Infrastructure",
-          content: "The primary purpose of data collection is to facilitate a discovery match between Landowners and Construction Professionals.",
+          label: "a) Matchmaking Infrastructure (Core Service)",
+          content: "The primary purpose of data collection is to facilitate a high-precision discovery match between Landowners (\"Clients\") and Construction Professionals (\"Vendors\").",
         },
         {
-          label: 'b) The "Rule of Five"',
-          content: "To protect User privacy while ensuring choice, Jointlly will share the User's contact and property details with a maximum of five (5) matching professionals at any given time.",
+          label: 'b) The "Rule of Five" (Strict Limitation)',
+          content: "To protect User privacy while ensuring competitive choice, Jointlly will share the User's contact and property details with a maximum of five (5) matching professionals at any given time. Constraint: Your data is never broadcast to a public list or open directory.",
         },
         {
           label: "c) Extended Matching",
-          content: "If the User requires more options, a manual request must be initiated, which constitutes a fresh consent for further data sharing.",
+          content: "If the User requires more options after the initial batch, a manual request must be initiated by the User. This action constitutes a fresh consent event for sharing data with a second batch of five professionals.",
         },
         {
-          label: "d) Legal Disclosure",
-          content: "We may disclose personal information if required by law to respond to subpoenas, court orders, or requests from the Data Protection Board of India.",
+          label: "d) Commercial Enforcement & Revenue Protection",
+          content: "For specific categories (Construction and Joint Development), Jointlly processes project status data to enforce the Anti-Circumvention Agreement. Usage: We track project milestones (e.g., \"Agreement Signed\") to calculate and recover the applicable Success Fee (0.5% - 0.75%). Legal Basis: Processing is necessary for the performance of a contract and recovery of legitimate dues.",
+        },
+        {
+          label: "e) Legal Disclosure",
+          content: "We may disclose personal information if required by law to respond to subpoenas, court orders, or official requests from the Data Protection Board of India.",
+        },
+      ],
+    },
+    {
+      icon: Clock,
+      title: "4. DATA LIFECYCLE BY CATEGORY",
+      items: [
+        {
+          label: "a) Lead-Only Categories (Interiors & Renovation/Repaint)",
+          content: "For these categories, data processing for \"Commercial Tracking\" ceases upon the successful \"Unlock\" of the lead. No long-term project status tracking is performed.",
+        },
+        {
+          label: "b) Commission-Based Categories (Construction & JD)",
+          content: "Data regarding the project status is retained and processed for 24 months or until the Success Fee is settled, whichever is later, to ensure compliance with the Anti-Circumvention terms.",
         },
       ],
     },
     {
       icon: Eye,
-      title: "4. USER RIGHTS (DATA PRINCIPAL RIGHTS)",
+      title: "5. USER RIGHTS (DATA PRINCIPAL RIGHTS)",
       items: [
         {
           label: "Right to Access",
-          content: "You may request a summary of the personal data being processed.",
+          content: "You may request a summary of the personal data being processed and the identities of the Data Processors (Builders) with whom it has been shared.",
         },
         {
-          label: "Right to Correction/Erasure",
-          content: "You may request the correction of inaccurate data or the erasure of your data once the matchmaking purpose is fulfilled.",
+          label: "Right to Correction",
+          content: "You may request the correction of inaccurate or misleading data.",
+        },
+        {
+          label: "Right to Erasure",
+          content: "You may request the erasure of your data once the matchmaking purpose is fulfilled, subject to statutory retention laws (e.g., tax audits).",
         },
         {
           label: "Right to Withdraw Consent",
-          content: 'You may withdraw your consent at any time via the "Consent Manager" in your account settings. Upon withdrawal, Jointlly will cease processing your data within 48 hours.',
+          content: 'You may withdraw your consent at any time via the "Consent Manager" in your account settings. Effect: Upon withdrawal, Jointlly will cease processing your data within 48 hours.',
+        },
+      ],
+    },
+    {
+      icon: Lock,
+      title: "6. SECURITY PRACTICES",
+      items: [
+        {
+          label: "a) Encryption",
+          content: "Jointlly Pvt Ltd employs industry-standard encryption (SSL/TLS) to protect data during transmission.",
+        },
+        {
+          label: "b) Payment Security",
+          content: "We do not store credit/debit card information. All payments are processed through RBI-authorized, PCI-DSS compliant third-party gateways (e.g., Razorpay/Stripe).",
         },
       ],
     },
     {
       icon: Cookie,
-      title: "5. COOKIES",
+      title: "7. COOKIES",
       items: [
         {
           label: "Cookie Usage",
@@ -92,37 +133,29 @@ const Privacy = () => {
       ],
     },
     {
-      icon: Lock,
-      title: "6. SECURITY",
-      items: [
-        {
-          label: "Data Protection",
-          content: "Jointlly Tech Pvt Ltd employs industry-standard encryption to protect data during transmission. We do not store credit/debit card information; all payments are processed through RBI-authorized, PCI-DSS compliant third-party gateways (e.g., Razorpay/Stripe).",
-        },
-      ],
-    },
-    {
       icon: UserCheck,
-      title: "7. GRIEVANCE REDRESSAL & DATA PROTECTION OFFICER",
+      title: "8. GRIEVANCE REDRESSAL & DATA PROTECTION OFFICER",
       items: [
         {
-          label: "Contact Information",
-          content: "In accordance with the IT Act 2000 and DPDP Act 2023, the details of the Grievance Officer and Data Protection Officer (DPO) are:",
+          label: "Grievance Officer & DPO Details",
+          content: "In accordance with the IT Act 2000 and DPDP Act 2023, the details of the Grievance Officer and Data Protection Officer (DPO) are provided below.",
           details: [
             "Name: Hemanth Murthy",
-            "Email: grievance@jointlly.in",
-            "Address: Banashankari, Bengaluru 560061",
+            "Designation: Grievance Officer & DPO",
+            "Email: grievance@jointlly.in | dpo@jointlly.in",
+            "Address: Banashankari, Bengaluru, 560061, Karnataka",
+            "Response Timeline: Acknowledgment: Within 48 hours. Resolution: Within 30 days. Urgent Takedown (Identity Theft/Obscenity): Within 72 hours.",
           ],
         },
       ],
     },
     {
       icon: Gavel,
-      title: "8. DISPUTE RESOLUTION & JURISDICTION",
+      title: "9. DISPUTE RESOLUTION & JURISDICTION",
       items: [
         {
           label: "a) Mediation",
-          content: "Disputes shall first be attempted to be resolved amicably within 30 days.",
+          content: "Disputes regarding privacy or data use shall first be attempted to be resolved amicably within 30 days.",
         },
         {
           label: "b) Arbitration",
@@ -130,7 +163,7 @@ const Privacy = () => {
         },
         {
           label: "c) Jurisdiction",
-          content: "This Policy is governed by the laws of India. The Courts at Bengaluru shall have exclusive jurisdiction.",
+          content: "This Policy is governed by the laws of India. The Courts at Bengaluru shall have exclusive jurisdiction over any disputes arising under this Policy.",
         },
       ],
     },
@@ -141,28 +174,31 @@ const Privacy = () => {
       <Navbar />
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
       <div className="absolute inset-0 jointlly-grid opacity-40" />
-      <div className="relative z-10 pt-24 md:pt-28 pb-16 md:pb-24">
+      <div className="relative z-10 pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-16 md:pb-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               <span className="text-gradient-primary">Privacy Policy</span>
             </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
               Jointlly Pvt Ltd
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+              Effective Date: February 2026
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Jurisdiction: India (DPDP Act 2023 Compliant)
             </p>
           </motion.div>
 
           {/* Privacy Policy Sections */}
-          <div className="space-y-8">
+          <div className="space-y-5 sm:space-y-8">
             {sections.map((section, sectionIndex) => {
               const Icon = section.icon;
               return (
@@ -171,18 +207,18 @@ const Privacy = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: sectionIndex * 0.1 }}
-                  className="glass-card p-6 md:p-8"
+                  className="glass-card p-4 sm:p-5 md:p-6 lg:p-8"
                 >
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-6 h-6 text-primary" />
+                  <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground flex-1">
+                    <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground flex-1 min-w-0">
                       {section.title}
                     </h2>
                   </div>
 
-                  <div className="space-y-6 ml-0 md:ml-16">
+                  <div className="space-y-4 sm:space-y-6 ml-0 md:ml-16">
                     {section.items.map((item, itemIndex) => (
                       <div key={itemIndex} className="space-y-2">
                         <h3 className="font-semibold text-foreground text-lg">
@@ -219,7 +255,7 @@ const Privacy = () => {
             className="mt-12 p-6 rounded-xl bg-blue-500/10 border border-blue-500/20"
           >
             <p className="text-sm text-muted-foreground text-center">
-              <strong className="text-foreground">Your Privacy Matters:</strong> We are committed to protecting your personal data in accordance with the DPDP Act 2023. For any privacy-related concerns or to exercise your rights, please contact our Data Protection Officer at grievance@jointlly.in
+              <strong className="text-foreground">Your Privacy Matters:</strong> We are committed to protecting your personal data in accordance with the DPDP Act 2023. For any privacy-related concerns or to exercise your rights, contact our Grievance Officer at grievance@jointlly.in or our Data Protection Officer at dpo@jointlly.in
             </p>
           </motion.div>
         </div>

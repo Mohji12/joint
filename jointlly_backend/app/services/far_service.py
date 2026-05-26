@@ -1,12 +1,21 @@
 """
-FAR (Floor Area Ratio) calculation service
+FAR (Floor Area Ratio) calculation service.
+
+This module exposes a simple API that is used in two ways:
+- Attached to persisted `Property` objects for landowner projects.
+- As a reusable rule engine for on-the-fly FAR calculations
+  (used by generic FAR endpoints and forms).
 """
 from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+
 from app.models.verification import FARCalculation
 from app.models.landowner import Property
 from app.utils.constants import BENGALURU_FAR_MIN, BENGALURU_FAR_MAX
+from app.schemas.far import FARResult, FARSetbackResult
+from app.services.far_rules import calculate_far_internal
 
 
 class FARService:
@@ -17,55 +26,58 @@ class FARService:
         plot_area_sqft: float,
         road_width_ft: float,
         zone_type: Optional[str] = None,
-        city: str = "Bengaluru"
-    ) -> dict:
+        use_type: str = "RESIDENTIAL",
+        premium_far_opt_in: bool = False,
+        premium_far_band: Optional[str] = None,
+    ) -> FARResult:
         """
-        Calculate FAR based on road width, zone, and city rules
-        
-        Bengaluru FAR rules (simplified):
-        - Residential zones: FAR typically 1.5 to 3.25
-        - Depends on road width:
-          - < 30 ft road: FAR ~1.5-2.0
-          - 30-40 ft road: FAR ~2.0-2.5
-          - 40-60 ft road: FAR ~2.5-3.0
-          - > 60 ft road: FAR ~3.0-3.25
-        - Premium FAR available with payment
+        Calculate FAR based on road width, zone, use type and premium FAR rules.
+
+        This uses the helper functions in `far_rules` which encode the
+        2024–2026 Bengaluru guidance (including premium FAR and indicative
+        floors/coverage) in a maintainable way.
+
+        The previous implementation returned a plain dict; to remain
+        backwards compatible for existing call sites that only need
+        `calculated_far` and `total_buildable_area_sqft`, those keys are
+        preserved in the Pydantic model.
         """
-        if city.lower() != "bengaluru":
-            # Default to Bengaluru rules for now
-            pass
-        
-        # Determine FAR based on road width
-        if road_width_ft < 30:
-            base_far = 1.5
-            max_far = 2.0
-        elif road_width_ft < 40:
-            base_far = 2.0
-            max_far = 2.5
-        elif road_width_ft < 60:
-            base_far = 2.5
-            max_far = 3.0
-        else:
-            base_far = 3.0
-            max_far = 3.25
-        
-        # Use base FAR for calculation (can be upgraded with premium payment)
-        calculated_far = base_far
-        
-        # Calculate total buildable area
-        total_buildable_area = plot_area_sqft * calculated_far
-        
-        return {
-            "calculated_far": calculated_far,
-            "min_far": BENGALURU_FAR_MIN,
-            "max_far": max_far,
-            "base_far": base_far,
-            "premium_far_available": max_far > base_far,
-            "total_buildable_area_sqft": total_buildable_area,
-            "plot_area_sqft": plot_area_sqft,
-            "road_width_ft": road_width_ft,
-            "zone_type": zone_type or "Residential"
-        }
+        # Delegate to rule engine
+        internal = calculate_far_internal(
+            plot_area_sqft=plot_area_sqft,
+            road_width_ft=road_width_ft,
+            use_type=use_type,
+            zone=zone_type,
+            premium_far_opt_in=premium_far_opt_in,
+            premium_far_band=premium_far_band,
+        )
+
+        setbacks = FARSetbackResult(
+            front_setback_m=internal.front_setback_m,
+            rear_setback_m=internal.rear_setback_m,
+            side_setback_m=internal.side_setback_m,
+            coverage_percent=internal.coverage_percent,
+            plot_category=internal.plot_category,
+        )
+
+        effective_far = internal.effective_far
+
+        return FARResult(
+            base_far=internal.base_far,
+            premium_far_increment=internal.premium_far_increment,
+            effective_far=effective_far,
+            min_far_allowed=BENGALURU_FAR_MIN,
+            max_far_allowed=internal.max_far_with_premium,
+            plot_area_sqft=plot_area_sqft,
+            road_width_ft=road_width_ft,
+            total_buildable_area_sqft=internal.total_buildable_area_sqft,
+            floors_allowed=internal.floors_allowed,
+            use_type=use_type,
+            zone=zone_type,
+            premium_far_opt_in=premium_far_opt_in,
+            setbacks=setbacks,
+            notes=internal.notes,
+        )
     
     @staticmethod
     async def create_far_calculation(
@@ -87,12 +99,13 @@ class FARService:
             from app.exceptions import NotFoundError
             raise NotFoundError("Property", property_id)
         
-        # Calculate FAR
+        # Calculate FAR using residential defaults for property
         plot_area = property_obj.plot_area_sqft
         far_data = FARService.calculate_far(
             plot_area,
             road_width_ft,
-            zone_type
+            zone_type,
+            use_type="RESIDENTIAL",
         )
         
         # Create FAR calculation record
@@ -100,8 +113,8 @@ class FARService:
             property_id=property_id,
             road_width_ft=road_width_ft,
             zone_type=zone_type or "Residential",
-            calculated_far=far_data["calculated_far"],
-            total_buildable_area=far_data["total_buildable_area_sqft"]
+            calculated_far=far_data.effective_far,
+            total_buildable_area=far_data.total_buildable_area_sqft,
         )
         
         db.add(far_calculation)

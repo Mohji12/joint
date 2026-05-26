@@ -51,6 +51,9 @@ class CapabilityType(str, Enum):
 class MatchStatus(str, Enum):
     """Match status"""
     PENDING = "PENDING"
+    LANDOWNER_SELECTED = "LANDOWNER_SELECTED"
+    BUILDER_SELECTED_PAID = "BUILDER_SELECTED_PAID"
+    CONNECTED = "CONNECTED"
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
 
@@ -60,6 +63,17 @@ class TransactionType(str, Enum):
     PID_VERIFICATION = "PID_VERIFICATION"
     FEASIBILITY_UNLOCK = "FEASIBILITY_UNLOCK"
     PRIORITY_LISTING = "PRIORITY_LISTING"
+    # Gatekeeper / entry fees
+    LANDOWNER_ENTRY = "LANDOWNER_ENTRY"
+    BUILDER_ENTRY_INTERIORS = "BUILDER_ENTRY_INTERIORS"
+    BUILDER_ENTRY_RECONSTRUCTION = "BUILDER_ENTRY_RECONSTRUCTION"
+    BUILDER_ENTRY_CONSTRUCTION = "BUILDER_ENTRY_CONSTRUCTION"
+    BUILDER_ENTRY_JD = "BUILDER_ENTRY_JD"
+    # Success fees on closed Construction / JD deals
+    SUCCESS_FEE_BUILDER = "SUCCESS_FEE_BUILDER"
+    SUCCESS_FEE_LANDOWNER = "SUCCESS_FEE_LANDOWNER"
+    # Builder selects a project and must pay to unlock contact sharing
+    BUILDER_MATCH_SELECTION = "BUILDER_MATCH_SELECTION"
 
 
 class TransactionStatus(str, Enum):
@@ -154,6 +168,13 @@ class OnboardingStatus(str, Enum):
     VERIFIED = "VERIFIED"
 
 
+class BuilderApprovalStatus(str, Enum):
+    """Admin approval status for builder profiles."""
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
 # Pricing constants
 PID_VERIFICATION_FEE_MIN = 1999
 PID_VERIFICATION_FEE_MAX = 2999
@@ -169,6 +190,45 @@ MATCH_WEIGHTS = {
     "capability": 0.15,
     "verification": 0.10,
 }
+
+# Trust score formula: S = (Verification x 0.4) + (Proximity x 0.3) + (ResponseSpeed x 0.3)
+TRUST_WEIGHTS = {
+    "verification": 0.4,
+    "proximity": 0.3,
+    "response_speed": 0.3,
+}
+
+# Asset class for Tier 1 matching (landowner_asset_class / builder_asset_portfolio)
+class AssetClass(str, Enum):
+    """Asset class for project/builder matching"""
+    RESIDENTIAL_VILLA = "RESIDENTIAL_VILLA"
+    RESIDENTIAL_MULTISTOREY = "RESIDENTIAL_MULTISTOREY"
+    COMMERCIAL_OFFICE = "COMMERCIAL_OFFICE"
+    COMMERCIAL_RETAIL = "COMMERCIAL_RETAIL"
+    INDUSTRIAL_WAREHOUSE = "INDUSTRIAL_WAREHOUSE"
+    INDUSTRIAL_FACTORY = "INDUSTRIAL_FACTORY"
+    RESIDENTIAL = "RESIDENTIAL"
+    COMMERCIAL = "COMMERCIAL"
+    INDUSTRIAL = "INDUSTRIAL"
+
+
+# Budget tier for Tier 2 (Basic / Standard / Luxury)
+class BudgetTier(str, Enum):
+    """Landowner budget tier"""
+    BASIC = "BASIC"
+    STANDARD = "STANDARD"
+    LUXURY = "LUXURY"
+
+
+# Project scale tier from BUA (for RERA and Tier 2)
+class ProjectScaleTier(str, Enum):
+    """Project scale from total buildable area"""
+    SMALL_SCALE = "SMALL_SCALE"   # < 2500 sqft
+    MEDIUM_SCALE = "MEDIUM_SCALE"  # 2500-10000
+    LARGE_SCALE = "LARGE_SCALE"    # 10000+
+
+# BUA above this (sqft) triggers RERA filter in matching
+RERA_THRESHOLD_SQFT = 5400
 
 # FAR constants for Bengaluru
 BENGALURU_FAR_MIN = 1.5

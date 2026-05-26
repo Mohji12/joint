@@ -1,0 +1,78 @@
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+.card {
+  border: 1px solid var(--opp-border, #e5e7eb);
+  border-radius: var(--opp-radius, 12px);
+  padding: 1rem;
+  min-height: 220px;
+  background: #fafafa;
+}
+
+.shimmer {
+  height: 100%;
+  min-height: 120px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 0%,
+    #e5e7eb 45%,
+    #f3f4f6 90%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.line,
+.lineShort {
+  height: 0.65rem;
+  border-radius: 4px;
+  margin-top: 0.65rem;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 0%,
+    #e5e7eb 45%,
+    #f3f4f6 90%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.line {
+  width: 100%;
+}
+
+.lineShort {
+  width: 55%;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.block {
+  height: 2.5rem;
+  border-radius: 6px;
+  background: #eceff2;
+}

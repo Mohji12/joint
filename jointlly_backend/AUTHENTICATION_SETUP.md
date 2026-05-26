@@ -259,7 +259,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 DATABASE_URL=mysql+aiomysql://admin:Critical%232025@critical-classes.cnq64ucw4hew.ap-south-1.rds.amazonaws.com:3306/jointly
 JWT_SECRET_KEY=your-secret-key-min-32-chars
 JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=120
 JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
 RAZORPAY_KEY_ID=rzp_test_dummy1234567890
 RAZORPAY_KEY_SECRET=dummy_secret_key_abcdefghijklmnopqrstuvwxyz1234567890

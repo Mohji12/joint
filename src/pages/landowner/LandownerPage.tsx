@@ -26,7 +26,7 @@ const options = [
   },
   {
     id: "reconstruction",
-    title: "Reconstruction / Repair work",
+    title: "Renovation / repaint work",
     description: "I want to make repairs or improvements to my existing space.",
     icon: Wrench,
     path: "/landowner/reconstruction",
@@ -35,10 +35,10 @@ const options = [
 
 const LandownerPage = () => {
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <section className="relative py-32 overflow-hidden">
+    <div className="w-full overflow-x-hidden">
+      <section className="relative py-6 sm:py-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background" />
-        <div className="relative z-10 max-w-5xl mx-auto px-6">
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
           <div className="flex items-center gap-4 mb-12">
             <Link
               to="/"

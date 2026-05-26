@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredUserType?: "builder" | "landowner";
+  requiredUserType?: "builder" | "landowner" | "admin";
 }
 
 const ProtectedRoute = ({ children, requiredUserType }: ProtectedRouteProps) => {
@@ -34,12 +34,18 @@ const ProtectedRoute = ({ children, requiredUserType }: ProtectedRouteProps) => 
 
   // Check if user type matches required type
   if (requiredUserType && user?.userType !== requiredUserType) {
-    // Redirect to correct options page based on user type
+    if (requiredUserType === "admin") {
+      if (user?.userType === "builder") return <Navigate to="/builder/options" replace />;
+      if (user?.userType === "landowner") return <Navigate to="/landowner/options" replace />;
+      return <Navigate to="/auth" replace />;
+    }
+    if (user?.userType === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
     if (user?.userType === "builder") {
       return <Navigate to="/builder/options" replace />;
-    } else {
-      return <Navigate to="/landowner/options" replace />;
     }
+    return <Navigate to="/landowner/options" replace />;
   }
 
   return <>{children}</>;

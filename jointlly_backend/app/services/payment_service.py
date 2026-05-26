@@ -10,17 +10,31 @@ from app.config import settings
 from app.models.payment import Transaction, Payment
 from app.models.user import User
 from app.utils.constants import TransactionType, TransactionStatus
+from app.utils.pricing import GATEKEEPER_RULES, PricingCategory
 from app.exceptions import NotFoundError, ValidationError
 
 
 class PaymentService:
     """Service for payment operations with Razorpay"""
-    
+
+    _RAZORPAY_ERROR = (
+        "Razorpay is not configured (razorpay_key_id/razorpay_key_secret not set). "
+        "Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment."
+    )
+
     def __init__(self):
-        """Initialize Razorpay client"""
-        self.client = razorpay.Client(
-            auth=(settings.razorpay_key_id, settings.razorpay_key_secret)
-        )
+        """Initialize Razorpay client (lazy; allows app to start when keys not set)"""
+        self._client = None
+        if settings.razorpay_key_id and settings.razorpay_key_secret:
+            self._client = razorpay.Client(
+                auth=(settings.razorpay_key_id, settings.razorpay_key_secret)
+            )
+
+    @property
+    def client(self):
+        if self._client is None:
+            raise RuntimeError(self._RAZORPAY_ERROR)
+        return self._client
     
     async def create_order(
         self,
@@ -29,16 +43,39 @@ class PaymentService:
         amount: float,
         transaction_type: TransactionType,
         project_id: Optional[UUID] = None,
-        currency: str = "INR"
+        match_id: Optional[UUID] = None,
+        currency: str = "INR",
+        expected_amount: Optional[float] = None,
     ) -> dict:
         """Create Razorpay order"""
+        normalized_currency = (currency or "INR").upper()
+        normalized_amount = float(amount)
+
+        if transaction_type == TransactionType.LANDOWNER_ENTRY:
+            landowner_rule = GATEKEEPER_RULES[PricingCategory.LANDOWNER_ENTRY]
+            expected_amount = float(landowner_rule.min_fee)
+            if round(normalized_amount, 2) != round(expected_amount, 2):
+                raise ValidationError(
+                    f"LANDOWNER_ENTRY amount must be exactly ₹{expected_amount:.2f}"
+                )
+            if normalized_currency != "INR":
+                raise ValidationError("LANDOWNER_ENTRY currency must be INR")
+
+        if expected_amount is not None:
+            expected = float(expected_amount)
+            if round(normalized_amount, 2) != round(expected, 2):
+                raise ValidationError(
+                    f"{transaction_type.value} amount must be exactly {expected:.2f}"
+                )
+
         # Create transaction record
         transaction = Transaction(
             user_id=user_id,
             project_id=project_id,
+            match_id=match_id,
             transaction_type=transaction_type,
-            amount=amount,
-            currency=currency,
+            amount=normalized_amount,
+            currency=normalized_currency,
             status=TransactionStatus.PENDING
         )
         
@@ -54,7 +91,8 @@ class PaymentService:
             "notes": {
                 "transaction_id": str(transaction.id),
                 "transaction_type": transaction_type.value,
-                "user_id": str(user_id)
+                "user_id": str(user_id),
+                "match_id": str(match_id) if match_id else ""
             }
         }
         
@@ -67,10 +105,10 @@ class PaymentService:
             await db.refresh(transaction)
             
             return {
-                "transaction_id": str(transaction.id),
+                "transaction_id": transaction.id,
                 "order_id": razorpay_order["id"],
-                "amount": amount,
-                "currency": currency,
+                "amount": normalized_amount,
+                "currency": normalized_currency,
                 "razorpay_key_id": settings.razorpay_key_id
             }
         except Exception as e:
@@ -182,10 +220,20 @@ class PaymentService:
         db: AsyncSession,
         user_id: UUID
     ) -> list:
-        """Get all transactions for a user"""
+        """Get all transactions for a user.
+
+        Filters out legacy/corrupt rows with invalid enum values so response
+        serialization does not fail for the full list endpoint.
+        """
+        valid_transaction_types = [member.value for member in TransactionType]
+        valid_transaction_statuses = [member.value for member in TransactionStatus]
         result = await db.execute(
             select(Transaction)
-            .where(Transaction.user_id == user_id)
+            .where(
+                Transaction.user_id == user_id,
+                Transaction.transaction_type.in_(valid_transaction_types),
+                Transaction.status.in_(valid_transaction_statuses),
+            )
             .order_by(Transaction.created_at.desc())
         )
         return list(result.scalars().all())
@@ -218,3 +266,22 @@ class PaymentService:
         # Unlock feasibility report
         from app.services.feasibility_service import FeasibilityService
         await FeasibilityService.unlock_feasibility_report(db, project.property_id)
+
+    async def unlock_builder_match_selection(
+        self,
+        db: AsyncSession,
+        transaction: Transaction,
+    ) -> None:
+        """Trigger builder-select-confirmed flow after successful payment."""
+        if transaction.transaction_type != TransactionType.BUILDER_MATCH_SELECTION:
+            return
+        if transaction.status != TransactionStatus.SUCCESS:
+            return
+        if not transaction.match_id:
+            return
+        from app.services.matching_service import MatchingService
+        await MatchingService.builder_express_interest_after_payment(
+            db,
+            transaction.match_id,
+            transaction.id,
+        )

@@ -78,6 +78,17 @@ app/
 └── utils/         # Utilities
 ```
 
+## Seed demo builder portfolio (Projects page)
+
+The builder **Account → Projects** UI lists rows from the `portfolios` table (`GET /api/v1/professionals/portfolio`). To insert sample projects for a user who already has a **PROFESSIONAL** account and `professional_profiles` row:
+
+```bash
+# From jointlly_backend, venv activated, DATABASE_URL set in .env
+python scripts/seed_builder_portfolio_dummy.py your-builder@email.com
+```
+
+The script is idempotent (skips if names starting with `JP Demo:` already exist). Use `--force` to insert another batch anyway.
+
 ## License
 
 MIT

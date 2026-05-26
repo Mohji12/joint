@@ -8,7 +8,7 @@ from sqlalchemy import select
 from app.models.landowner import LandownerProfile, Property, Project, JVPreferences
 from app.models.user import User
 from app.utils.constants import ProjectType, ProjectStatus, JVPostConstructionExpectation
-from app.exceptions import NotFoundError, ConflictError, ValidationError
+from app.exceptions import NotFoundError, ConflictError
 
 
 class LandownerService:
@@ -102,7 +102,9 @@ class LandownerService:
         khatha_type: Optional[str] = None,
         e_khatha_status: Optional[str] = None,
         tax_paid: bool = False,
-        pid_number: Optional[str] = None
+        pid_number: Optional[str] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None
     ) -> Property:
         """Create property"""
         property_obj = Property(
@@ -121,7 +123,9 @@ class LandownerService:
             khatha_type=khatha_type,
             e_khatha_status=e_khatha_status,
             tax_paid=tax_paid,
-            pid_number=pid_number
+            pid_number=pid_number,
+            latitude=latitude,
+            longitude=longitude
         )
         
         db.add(property_obj)
@@ -167,18 +171,22 @@ class LandownerService:
         project_type: ProjectType,
         intent: Optional[str] = None,
         timeline: Optional[str] = None,
-        scope: Optional[str] = None
+        scope: Optional[str] = None,
+        asset_class: Optional[str] = None,
+        budget_tier: Optional[str] = None,
     ) -> Project:
         """Create project"""
         # Validate property exists
         await LandownerService.get_property(db, property_id)
-        
+
         project = Project(
             property_id=property_id,
             project_type=project_type,
             intent=intent,
             timeline=timeline,
             scope=scope,
+            asset_class=asset_class,
+            budget_tier=budget_tier,
             status=ProjectStatus.DRAFT
         )
         
@@ -188,6 +196,19 @@ class LandownerService:
         
         return project
     
+    @staticmethod
+    async def list_projects(
+        db: AsyncSession,
+        landowner_id: UUID
+    ) -> List[Project]:
+        """List all projects for a landowner (via their properties)."""
+        result = await db.execute(
+            select(Project)
+            .join(Property, Project.property_id == Property.id)
+            .where(Property.landowner_id == landowner_id)
+        )
+        return list(result.scalars().all())
+
     @staticmethod
     async def get_project(
         db: AsyncSession,
@@ -215,22 +236,6 @@ class LandownerService:
     ) -> Project:
         """Publish project (triggers matching)"""
         project = await LandownerService.get_project(db, project_id, landowner_id)
-        
-        # Validate project requirements based on type
-        if project.project_type == ProjectType.JV_JD:
-            # JV/JD requires PID verification
-            from app.models.verification import PIDVerification
-            from app.utils.constants import VerificationStatus
-            
-            result = await db.execute(
-                select(PIDVerification)
-                .where(PIDVerification.property_id == project.property_id)
-                .where(PIDVerification.verification_status == VerificationStatus.VERIFIED)
-            )
-            pid_verification = result.scalar_one_or_none()
-            
-            if not pid_verification:
-                raise ValidationError("PID verification is mandatory for JV/JD projects")
         
         project.status = ProjectStatus.PUBLISHED
         await db.commit()

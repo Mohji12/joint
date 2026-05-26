@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield, Calculator, Handshake, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Home, BarChart3, Shield, Handshake, Lightbulb, Phone } from "lucide-react";
+import {
+  getAccessToken,
+  submitLandownerJointVenture,
+  createPropertyAndProjectFromLandownerForm,
+  calculateFar,
+  generatePlanImage,
+  type FARResult,
+  type FARUseType,
+  type FARZone,
+  FAR_ZONE_OPTIONS,
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,45 +26,87 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CityAreaInput } from "@/components/CityAreaInput";
+import { BangaloreMap } from "@/components/BangaloreMap";
+import { StepFormLayout, type StepFormSection } from "@/components/StepFormLayout";
+import { CONSTRUCTION_MODE_OPTIONS } from "@/lib/constructionModeOptions";
 
 const PROPERTY_DIMENSIONS = [
-  "30×40",
-  "20×30",
-  "30×50",
-  "20×40",
-  "40×60",
-  "50×60",
-  "50×80",
-  "Other (free text)",
+  "30x40",
+  "20x30",
+  "30x50",
+  "20x40",
+  "40x60",
+  "50x60",
+  "50x80",
+  "Others (Free text)",
 ];
 
 const POST_CONSTRUCTION_OPTIONS = [
-  "Built-up area sharing",
-  "Revenue sharing on the property",
+  "Square foot sharing",
+  "Revenue sharing",
+];
+
+const JV_TIMELINE_OPTIONS = [
+  "Immediately",
+  "Within a month",
+  "Within 3 months",
+  "Within 6 months",
+  "Just here for research",
+];
+
+const SECTIONS: StepFormSection[] = [
+  { id: "property", label: "Property Details", icon: Home },
+  { id: "far", label: "FAR & Development Potential", icon: BarChart3 },
+  { id: "verification", label: "Property Verification", icon: Shield },
+  { id: "expectation", label: "Post-Construction Expectation", icon: Handshake },
+  { id: "planning", label: "Planning Intention", icon: Lightbulb },
+  { id: "poc", label: "Point of Contact", icon: Phone },
 ];
 
 const LandownerJointVenture = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"brief" | "verification" | "preferences" | "feasibility" | "visibility" | "done">("brief");
-  
-  // Property Verification (Mandatory)
-  const [propertyOwnerName, setPropertyOwnerName] = useState("");
-  const [googleMapsLocation, setGoogleMapsLocation] = useState("");
+  const [step, setStep] = useState<"brief" | "form" | "done">("brief");
+  const [activeSectionId, setActiveSectionId] = useState(SECTIONS[0].id);
+
   const [propertyDimensions, setPropertyDimensions] = useState("");
   const [propertyDimensionsOther, setPropertyDimensionsOther] = useState("");
+  const [locality, setLocality] = useState("");
+  const [ward, setWard] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [streetName, setStreetName] = useState("");
+  const [societyName, setSocietyName] = useState("");
   const [propertyFacing, setPropertyFacing] = useState("");
+  const [hasPoc, setHasPoc] = useState<"yes" | "no" | "">("");
+  const [pocName, setPocName] = useState("");
+  const [pocMobile, setPocMobile] = useState("");
+  const [pocAvailability, setPocAvailability] = useState("");
+  const [pocTiming, setPocTiming] = useState("");
+  const [googleMapsLocation, setGoogleMapsLocation] = useState("");
   const [isCornerProperty, setIsCornerProperty] = useState(false);
   const [cornerFacings, setCornerFacings] = useState("");
   const [roadWidth, setRoadWidth] = useState("");
+
+  const [propertyOwnerName, setPropertyOwnerName] = useState("");
+  const [pidNumber, setPidNumber] = useState("");
   const [khathaType, setKhathaType] = useState("");
   const [ekhathaStatus, setEkhathaStatus] = useState("");
   const [taxPaidDetails, setTaxPaidDetails] = useState("");
-  const [pidNumber, setPidNumber] = useState("");
-  
-  // JV Preferences
+
   const [postConstructionExpectation, setPostConstructionExpectation] = useState<string[]>([]);
   const [hasPresetIdea, setHasPresetIdea] = useState<"yes" | "no" | "">("");
   const [presetIdeaExplain, setPresetIdeaExplain] = useState("");
+  const [timeline, setTimeline] = useState("");
+  const [constructionMode, setConstructionMode] = useState("");
+
+
+  const [zone, setZone] = useState<FARZone | undefined>(undefined);
+  const [farResult, setFarResult] = useState<FARResult | null>(null);
+  const [farError, setFarError] = useState<string | null>(null);
+  const [farLoading, setFarLoading] = useState(false);
+  const [planImageUrl, setPlanImageUrl] = useState<string | null>(null);
+  const [planImageLoading, setPlanImageLoading] = useState(false);
+  const [planImageError, setPlanImageError] = useState<string | null>(null);
 
   const togglePostConstruction = (option: string) => {
     setPostConstructionExpectation((prev) =>
@@ -61,114 +114,192 @@ const LandownerJointVenture = () => {
     );
   };
 
-  const calculateFAR = () => {
-    const roadWidthNum = parseFloat(roadWidth) || 0;
-    let far = 1.5;
-    if (roadWidthNum >= 40) far = 3.25;
-    else if (roadWidthNum >= 30) far = 2.75;
-    else if (roadWidthNum >= 20) far = 2.0;
-    else if (roadWidthNum >= 12) far = 1.75;
-    return far.toFixed(2);
-  };
-
-  const calculateSetbacks = () => {
-    if (!propertyDimensions || propertyDimensions === "Other (free text)") return null;
-    
-    const dims = propertyDimensions.split("×").map(d => parseFloat(d));
-    if (dims.length !== 2) return null;
-    
-    const areaSqFt = dims[0] * dims[1];
-    const areaSqM = areaSqFt / 10.764;
-    
-    let setbacks = {
-      front: 0,
-      rear: 0,
-      sides: 0,
-      category: "",
-    };
-    
-    if (areaSqM <= 60) {
-      setbacks = { front: 0.7, rear: 0, sides: 0.6, category: "Up to 60 sq m" };
-    } else if (areaSqM <= 150) {
-      setbacks = { front: 0.9, rear: 0.7, sides: 0.7, category: "60-150 sq m" };
-    } else if (areaSqM <= 250) {
-      setbacks = { front: 1.0, rear: 0.8, sides: 0.8, category: "150-250 sq m" };
-    } else if (areaSqM <= 4000) {
-      setbacks = { front: 0.12, rear: 0.08, sides: 0.08, category: "Above 250 sq m (percentage)" };
-    } else {
-      setbacks = { front: 5, rear: 5, sides: 5, category: "Above 4000 sq m" };
+  const parseDimensions = () => {
+    const dimStr = propertyDimensions === "Others (Free text)" ? propertyDimensionsOther : propertyDimensions;
+    if (!dimStr) return { length: undefined as number | undefined, width: undefined as number | undefined };
+    const parts = dimStr.split(/[x×]/i).map((d) => parseFloat(d.trim()));
+    if (parts.length !== 2 || parts.some((v) => Number.isNaN(v))) {
+      return { length: undefined as number | undefined, width: undefined as number | undefined };
     }
-    
-    return setbacks;
+    return { length: parts[0], width: parts[1] };
   };
 
-  const calculateFeasibility = () => {
-    if (!propertyDimensions || propertyDimensions === "Other (free text)") return null;
-    
-    const dims = propertyDimensions.split("×").map(d => parseFloat(d));
-    if (dims.length !== 2) return null;
-    
-    const plotArea = dims[0] * dims[1];
-    const far = parseFloat(calculateFAR());
-    const totalBuildableArea = plotArea * far;
-    
-    const setbacks = calculateSetbacks();
-    if (!setbacks) return null;
-    
-    // Simplified calculation - in real app would use actual dimensions
-    const netBuildableArea = plotArea * 0.75; // Approximate after setbacks
-    
-    return {
-      plotArea,
-      far,
-      totalBuildableArea,
-      netBuildableArea,
-      setbacks,
-      allowedFloors: "Stilt + 4",
-      approximateUnits: Math.floor(totalBuildableArea / 800), // Approximate
+  const plotAreaSqft = (() => {
+    const { length, width } = parseDimensions();
+    if (length == null || width == null) return null;
+    return Math.round(length * width);
+  })();
+
+  const getUseTypeForFar = (): FARUseType => {
+    // JV/JD is usually residential; can be adjusted in future if you collect more detail.
+    return "RESIDENTIAL";
+  };
+
+  const ensureFarCalculated = async (): Promise<FARResult | null> => {
+    setFarError(null);
+    const roadWidthNum = parseFloat(roadWidth) || 0;
+    const { length, width } = parseDimensions();
+    if (!length || !width || !roadWidthNum) {
+      setFarError("Enter valid dimensions and road width to calculate FAR.");
+      return null;
+    }
+    try {
+      setFarLoading(true);
+      const result = await calculateFar({
+        plot_length_ft: length,
+        plot_width_ft: width,
+        road_width_ft: roadWidthNum,
+        zone,
+        use_type: getUseTypeForFar(),
+      });
+      setFarResult(result);
+      return result;
+    } catch (e) {
+      setFarError(e instanceof Error ? e.message : "FAR calculation failed. Please try again.");
+      return null;
+    } finally {
+      setFarLoading(false);
+    }
+  };
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    const farCalc = await ensureFarCalculated();
+    const feasibility = farCalc
+      ? {
+          plotArea: farCalc.plot_area_sqft,
+          far: farCalc.effective_far,
+          totalBuildableArea: farCalc.total_buildable_area_sqft,
+          netBuildableArea: farCalc.total_buildable_area_sqft * 0.75,
+          setbacks: farCalc.setbacks,
+          allowedFloors: farCalc.floors_allowed,
+        }
+      : {};
+    const payload = {
+      property_location: {
+        city: "Bangalore",
+        locality: locality || undefined,
+        ward,
+        landmark,
+        street_name: streetName.trim() || undefined,
+        society_name: societyName.trim() || undefined,
+        google_maps_location: googleMapsLocation,
+      },
+      project_intent: {
+        timeline: timeline || undefined,
+      },
+      point_of_contact: hasPoc === "yes"
+        ? {
+            has_poc: true,
+            name: pocName.trim() || undefined,
+            mobile: pocMobile.trim() || undefined,
+            availability: pocAvailability.trim() || undefined,
+            timing: pocTiming.trim() || undefined,
+          }
+        : { has_poc: false },
+      property_details: {
+        dimensions: propertyDimensions === "Others (Free text)" ? propertyDimensionsOther : propertyDimensions,
+        facing: propertyFacing,
+        is_corner_property: isCornerProperty,
+        corner_facings: isCornerProperty ? cornerFacings : "",
+        road_width: roadWidth,
+      },
+      verification: {
+        property_owner_name: propertyOwnerName,
+        pid_number: pidNumber,
+        khatha_type: khathaType,
+        ekhatha_status: ekhathaStatus,
+        tax_paid_details: taxPaidDetails,
+      },
+      jv_preferences: {
+        post_construction_expectation: postConstructionExpectation,
+        has_preset_idea: hasPresetIdea,
+        preset_idea_explain: hasPresetIdea === "yes" ? presetIdeaExplain : "",
+      },
+      contract_preferences: constructionMode.trim()
+        ? { construction_mode: constructionMode.trim() }
+        : undefined,
+      feasibility,
     };
-  };
 
-  const handleSubmit = () => {
-    const feasibility = calculateFeasibility();
+    const token = getAccessToken();
+    if (token) {
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        await createPropertyAndProjectFromLandownerForm(
+          { ...payload, verification: payload.verification },
+          "JV_JD",
+          { publish: true }
+        );
+        try {
+          await submitLandownerJointVenture(payload);
+        } catch {
+          // Form audit is best-effort; entity already created
+        }
+        setStep("done");
+      } catch (e) {
+        setSubmitError(e instanceof Error ? e.message : "Submit failed");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    const pl = payload.property_location || {};
+    const pd = payload.property_details || {};
+    const ver = payload.verification || {};
+    const jv = payload.jv_preferences || {};
+    const feas = payload.feasibility || {};
+    const pi = payload.project_intent || {};
     const formData = {
       type: "joint-venture",
-      propertyOwnerName,
       propertyLocation: {
-        googleMapsLocation,
+        city: pl.city,
+        locality: pl.locality,
+        ward: pl.ward,
+        landmark: pl.landmark,
+        address: pl.google_maps_location || googleMapsLocation,
+        googleMapsLocation: pl.google_maps_location || googleMapsLocation,
+        streetName: pl.street_name,
+        societyName: pl.society_name,
       },
+      pointOfContact: payload.point_of_contact,
       propertyDetails: {
-        dimensions: propertyDimensions === "Other (free text)" ? propertyDimensionsOther : propertyDimensions,
-        facing: propertyFacing,
-        isCornerProperty,
-        cornerFacings: isCornerProperty ? cornerFacings : "",
-        roadWidth,
-        khathaType,
-        ekhathaStatus,
-        taxPaidDetails,
-        pidNumber,
+        dimensions: pd.dimensions,
+        facing: pd.facing,
+        roadWidth: pd.road_width,
+        isCornerProperty: pd.is_corner_property,
+        cornerFacings: pd.corner_facings,
       },
+      verification: { khathaType: ver.khatha_type, ekhathaStatus: ver.ekhatha_status },
       jvPreferences: {
-        postConstructionExpectation,
-        hasPresetIdea,
-        presetIdeaExplain: hasPresetIdea === "yes" ? presetIdeaExplain : "",
+        postConstructionExpectation: jv.post_construction_expectation || [],
+        presetIdeaExplain: jv.preset_idea_explain,
       },
-      feasibility: feasibility || {},
+      projectIntent: { timeline: pi.timeline },
+      timeline: pi.timeline,
+      feasibility: {
+        far: feas.far != null ? String(feas.far) : farCalc ? String(farCalc.effective_far) : undefined,
+        allowedFloors: feas.allowedFloors || farCalc?.floors_allowed,
+        totalBuildableArea: farCalc?.total_buildable_area_sqft,
+      },
+      contractPreferences: payload.contract_preferences,
       submittedAt: new Date().toISOString(),
     };
-    
     const existingProjects = JSON.parse(localStorage.getItem("landownerProjects") || "[]");
     existingProjects.push(formData);
     localStorage.setItem("landownerProjects", JSON.stringify(existingProjects));
-    
     setStep("done");
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <section className="relative py-32 overflow-hidden">
+    <div className="w-full overflow-x-hidden">
+      <section className="relative py-6 sm:py-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background" />
-        <div className="relative z-10 max-w-3xl mx-auto px-6">
+        <div className="relative z-10 max-w-3xl mx-auto w-full">
           <Link
             to="/landowner/options"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-12 transition-colors"
@@ -184,14 +315,14 @@ const LandownerJointVenture = () => {
               className="space-y-8"
             >
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">Joint Venture / Joint Development (JV/JD)</h1>
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-6">
-                <p className="text-muted-foreground leading-relaxed">
+              <div className="group rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-secondary/20 p-6 md:p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg space-y-6">
+                <p className="text-foreground leading-relaxed">
                   A JV/JD is a structured partnership where a landowner and a developer collaborate to develop a property 
                   and share risks and returns under a formal agreement.
                 </p>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground mb-2">Key Features:</h3>
-                  <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
+                  <ul className="space-y-1 text-sm text-foreground list-disc list-inside">
                     <li>Landowner contributes the land</li>
                     <li>Developer bears project costs and execution risk</li>
                     <li>Developer manages design, approvals, and construction</li>
@@ -200,456 +331,391 @@ const LandownerJointVenture = () => {
                     <li>Ideal for landowners seeking development without upfront capital</li>
                   </ul>
                 </div>
-                <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
+                <div className="rounded-lg p-4 border border-border">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-accent mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-foreground mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-accent mb-1">Important</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-semibold text-foreground mb-1">Important</p>
+                      <p className="text-xs text-foreground">
                         FAR + PID validation is compulsory for JV/JD projects.
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <Button size="lg" onClick={() => setStep("verification")} className="w-full sm:w-auto">
-                Start - Property Verification
+              <Button size="lg" onClick={() => setStep("form")} className="w-full sm:w-auto">
+                Start
               </Button>
             </motion.div>
           )}
 
-          {step === "verification" && (
+          {step === "form" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-8"
+              className="space-y-6"
             >
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Step 1: Mandatory Property Verification</h1>
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-6">
-                <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
-                  <div className="flex items-start gap-2">
-                    <Shield className="w-5 h-5 text-accent mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-accent mb-1">Mandatory Information</p>
-                      <p className="text-xs text-muted-foreground">
-                        All fields below are required for JV/JD projects. PID validation is compulsory.
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Joint Venture / Joint Development (JV/JD)</h1>
+
+              <StepFormLayout
+                sections={SECTIONS}
+                activeSectionId={activeSectionId}
+                onePagePerSection
+                onPrev={() => {
+                  const idx = SECTIONS.findIndex((s) => s.id === activeSectionId);
+                  if (idx <= 0) setStep("brief");
+                  else setActiveSectionId(SECTIONS[idx - 1].id);
+                }}
+                onNext={() => {
+                  const idx = SECTIONS.findIndex((s) => s.id === activeSectionId);
+                  if (idx < SECTIONS.length - 1) setActiveSectionId(SECTIONS[idx + 1].id);
+                }}
+                onSubmit={handleSubmit}
+                submitLabel="Publish to Opportunities"
+                submitDisabled={
+                  !propertyDimensions ||
+                  (propertyDimensions === "Others (Free text)" && !propertyDimensionsOther.trim()) ||
+                  !ward ||
+                  !propertyFacing ||
+                  !googleMapsLocation.trim() ||
+                  !roadWidth ||
+                  !propertyOwnerName.trim() ||
+                  !pidNumber.trim() ||
+                  !khathaType.trim() ||
+                  !ekhathaStatus ||
+                  !taxPaidDetails.trim() ||
+                  postConstructionExpectation.length === 0 ||
+                  !hasPresetIdea ||
+                  (hasPresetIdea === "yes" && !presetIdeaExplain.trim()) ||
+                  !constructionMode.trim() ||
+                  submitting
+                }
+                isSubmitting={submitting}
+              >
+                {activeSectionId === "property" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Property dimension</Label>
+                    <Select value={propertyDimensions} onValueChange={setPropertyDimensions}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {PROPERTY_DIMENSIONS.map((dim) => (
+                          <SelectItem key={dim} value={dim}>{dim}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {propertyDimensions === "Others (Free text)" && (
+                      <Input placeholder="Specify dimensions (e.g., 60x80)" value={propertyDimensionsOther} onChange={(e) => setPropertyDimensionsOther(e.target.value)} className="mt-2" />
+                    )}
+                    {plotAreaSqft != null && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Plot area: <span className="font-medium text-foreground">{plotAreaSqft.toLocaleString()} sq ft</span>
                       </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Which location and ward is the property located in?</Label>
+                    <p className="text-sm text-muted-foreground mb-2">(Bangalore + Area + Landmark nearby)</p>
+                    <div className="space-y-2">
+                      <Input value="Bangalore" disabled className="w-full sm:max-w-xs" />
+                      <CityAreaInput placeholder="Area / Locality (e.g. HSR Layout, Koramangala)" value={locality} onChange={setLocality} className="w-full" />
+                      <Input placeholder="Ward number / name" value={ward} onChange={(e) => setWard(e.target.value)} />
+                      <Input placeholder="Street name" value={streetName} onChange={(e) => setStreetName(e.target.value)} className="w-full" />
+                      <Input placeholder="Society name" value={societyName} onChange={(e) => setSocietyName(e.target.value)} className="w-full" />
+                      <Input placeholder="Landmark nearby" value={landmark} onChange={(e) => setLandmark(e.target.value)} />
                     </div>
+                    <BangaloreMap className="mt-4" height={320} area={locality} facing={propertyFacing} />
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Facing of the property</Label>
+                    <Select value={propertyFacing} onValueChange={setPropertyFacing}>
+                      <SelectTrigger><SelectValue placeholder="Select facing" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="North">North</SelectItem>
+                        <SelectItem value="South">South</SelectItem>
+                        <SelectItem value="East">East</SelectItem>
+                        <SelectItem value="West">West</SelectItem>
+                        <SelectItem value="North-East">North-East</SelectItem>
+                        <SelectItem value="North-West">North-West</SelectItem>
+                        <SelectItem value="South-East">South-East</SelectItem>
+                        <SelectItem value="South-West">South-West</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Google Map location and pin *</Label>
+                    <Input placeholder="Paste Google Maps link or coordinates" value={googleMapsLocation} onChange={(e) => setGoogleMapsLocation(e.target.value)} />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Checkbox id="corner-jv" checked={isCornerProperty} onCheckedChange={(c) => setIsCornerProperty(c as boolean)} />
+                      <Label htmlFor="corner-jv" className="font-normal cursor-pointer">Is it a corner property?</Label>
+                    </div>
+                    {isCornerProperty && (
+                      <Input placeholder="If Yes → Specify facing" value={cornerFacings} onChange={(e) => setCornerFacings(e.target.value)} className="mt-2" />
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Road width in front of the property</Label>
+                    <Input type="number" placeholder="Feet" value={roadWidth} onChange={(e) => setRoadWidth(e.target.value)} />
                   </div>
                 </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">
-                    Name of property owner *
-                  </Label>
-                  <Input
-                    placeholder="Your full name"
-                    value={propertyOwnerName}
-                    onChange={(e) => setPropertyOwnerName(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">
-                    Exact location with Google Maps pin *
-                  </Label>
-                  <Input
-                    placeholder="Paste Google Maps link or coordinates"
-                    value={googleMapsLocation}
-                    onChange={(e) => setGoogleMapsLocation(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">Property dimensions *</Label>
-                  <Select value={propertyDimensions} onValueChange={setPropertyDimensions}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select dimensions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PROPERTY_DIMENSIONS.map((dim) => (
-                        <SelectItem key={dim} value={dim}>{dim}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {propertyDimensions === "Other (free text)" && (
-                    <Input
-                      placeholder="Specify dimensions (e.g., 60×80)"
-                      value={propertyDimensionsOther}
-                      onChange={(e) => setPropertyDimensionsOther(e.target.value)}
-                      className="mt-3"
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">Property facing *</Label>
-                  <Select value={propertyFacing} onValueChange={setPropertyFacing}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select facing direction" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="North">North</SelectItem>
-                      <SelectItem value="South">South</SelectItem>
-                      <SelectItem value="East">East</SelectItem>
-                      <SelectItem value="West">West</SelectItem>
-                      <SelectItem value="North-East">North-East</SelectItem>
-                      <SelectItem value="North-West">North-West</SelectItem>
-                      <SelectItem value="South-East">South-East</SelectItem>
-                      <SelectItem value="South-West">South-West</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">Road width (feet) *</Label>
-                  <Input
-                    type="number"
-                    placeholder="Enter road width"
-                    value={roadWidth}
-                    onChange={(e) => setRoadWidth(e.target.value)}
-                  />
-                  {isCornerProperty && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Mention the widest road if corner plot
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Checkbox
-                      id="corner-property-jv"
-                      checked={isCornerProperty}
-                      onCheckedChange={(checked) => setIsCornerProperty(checked as boolean)}
-                    />
-                    <Label htmlFor="corner-property-jv" className="font-normal cursor-pointer">
-                      Is this a corner property?
-                    </Label>
-                  </div>
-                  {isCornerProperty && (
-                    <Input
-                      placeholder="Specify all facings (e.g., North & East)"
-                      value={cornerFacings}
-                      onChange={(e) => setCornerFacings(e.target.value)}
-                      className="mt-2"
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">Khatha type *</Label>
-                  <Input
-                    placeholder="e.g., A-Khatha, B-Khatha"
-                    value={khathaType}
-                    onChange={(e) => setKhathaType(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">E-Khatha status *</Label>
-                  <Select value={ekhathaStatus} onValueChange={setEkhathaStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Yes">Yes</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
-                      <SelectItem value="In Process">In Process</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">Tax paid details *</Label>
-                  <Textarea
-                    placeholder="Provide details about tax payments"
-                    value={taxPaidDetails}
-                    onChange={(e) => setTaxPaidDetails(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-2 block">
-                    PID Number (mandatory) *
-                  </Label>
-                  <Input
-                    placeholder="Enter your PID number"
-                    value={pidNumber}
-                    onChange={(e) => setPidNumber(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    PID validation fee: ₹1,999 – ₹2,999 (mandatory for JV/JD)
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" onClick={() => setStep("brief")}>Back</Button>
-                <Button
-                  size="lg"
-                  onClick={() => setStep("preferences")}
-                  disabled={
-                    !propertyOwnerName ||
-                    !googleMapsLocation ||
-                    !propertyDimensions ||
-                    !propertyFacing ||
-                    !roadWidth ||
-                    !khathaType ||
-                    !ekhathaStatus ||
-                    !taxPaidDetails ||
-                    !pidNumber
-                  }
-                >
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === "preferences" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-8"
-            >
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Step 2: JV Preferences</h1>
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-6">
-                <div>
-                  <Label className="text-base font-semibold mb-3 block">
-                    What is the client (landowner) seeking for post-construction? *
-                  </Label>
-                  <div className="space-y-2">
-                    {POST_CONSTRUCTION_OPTIONS.map((option) => (
-                      <div key={option} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`post-${option}`}
-                          checked={postConstructionExpectation.includes(option)}
-                          onCheckedChange={() => togglePostConstruction(option)}
-                        />
-                        <Label htmlFor={`post-${option}`} className="font-normal cursor-pointer">
-                          {option}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-3 block">
-                    Do you have a preset idea of what to build? *
-                  </Label>
-                  <RadioGroup value={hasPresetIdea} onValueChange={(v) => setHasPresetIdea(v as "yes" | "no")} className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="preset-yes" />
-                      <Label htmlFor="preset-yes" className="font-normal cursor-pointer">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="preset-no" />
-                      <Label htmlFor="preset-no" className="font-normal cursor-pointer">
-                        No → System suggests best-use options based on property information
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                  {hasPresetIdea === "yes" && (
-                    <div className="mt-3">
-                      <Label className="text-sm text-muted-foreground mb-2 block">Explain your idea</Label>
-                      <Textarea
-                        placeholder="Describe what you want to build"
-                        value={presetIdeaExplain}
-                        onChange={(e) => setPresetIdeaExplain(e.target.value)}
-                        rows={4}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" onClick={() => setStep("verification")}>Back</Button>
-                <Button
-                  size="lg"
-                  onClick={() => setStep("feasibility")}
-                  disabled={
-                    postConstructionExpectation.length === 0 ||
-                    !hasPresetIdea ||
-                    (hasPresetIdea === "yes" && !presetIdeaExplain.trim())
-                  }
-                >
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === "feasibility" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-8"
-            >
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                Step 3: FAR, Setbacks & Feasibility Logic
-              </h1>
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <Calculator className="w-5 h-5 text-primary" />
-                    BBMP Setback Rules (Jan 5, 2026)
-                  </h3>
-                  <div className="bg-primary/5 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium mb-2">Setback Rules:</p>
-                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Plots up to 60 sq m: Front 0.7m, Sides 0.6m each, Rear eliminated</li>
-                      <li>Plots 60-150 sq m: Front 0.9m, Rear 0.7m, One side 0.7m</li>
-                      <li>Plots 150-250 sq m: Front 1m, Rear 0.8m, Sides 0.8m each</li>
-                      <li>Plots above 250 sq m: Setbacks linked to dimensions (12% front, 8% rear/sides)</li>
-                      <li>Plots above 4000 sq m: Minimum 5m setback on all sides</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {calculateFeasibility() && (
-                  <div className="border-t border-border pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Your Feasibility Calculation</h3>
-                    <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg p-6 border border-primary/20 space-y-4">
-                      {(() => {
-                        const feasibility = calculateFeasibility();
-                        if (!feasibility) return null;
-                        const setbacks = feasibility.setbacks;
-                        
-                        return (
-                          <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Plot Area</p>
-                                <p className="text-lg font-semibold">{feasibility.plotArea.toLocaleString()} sq ft</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">FAR</p>
-                                <p className="text-lg font-semibold">{feasibility.far}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Total Buildable Area</p>
-                                <p className="text-lg font-semibold">{Math.round(feasibility.totalBuildableArea).toLocaleString()} sq ft</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Net Buildable Area</p>
-                                <p className="text-lg font-semibold">{Math.round(feasibility.netBuildableArea).toLocaleString()} sq ft</p>
-                              </div>
-                            </div>
-                            <div className="border-t border-border/50 pt-4">
-                              <p className="text-sm text-muted-foreground mb-2">Setbacks ({setbacks.category}):</p>
-                              <div className="grid grid-cols-3 gap-2 text-xs">
-                                <div>
-                                  <span className="text-muted-foreground">Front:</span>{" "}
-                                  <span className="font-medium">{setbacks.front}{setbacks.category.includes("percentage") ? "%" : "m"}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Rear:</span>{" "}
-                                  <span className="font-medium">{setbacks.rear}{setbacks.category.includes("percentage") ? "%" : "m"}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Sides:</span>{" "}
-                                  <span className="font-medium">{setbacks.sides}{setbacks.category.includes("percentage") ? "%" : "m"} each</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="border-t border-border/50 pt-4">
-                              <p className="text-sm text-muted-foreground mb-2">Development Potential:</p>
-                              <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                  <span className="text-muted-foreground">Allowed Floors:</span>{" "}
-                                  <span className="font-medium">{feasibility.allowedFloors}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Approximate Units:</span>{" "}
-                                  <span className="font-medium">{feasibility.approximateUnits}</span>
-                                </div>
-                              </div>
-                            </div>
-                            {hasPresetIdea === "no" && (
-                              <div className="border-t border-border/50 pt-4">
-                                <p className="text-sm font-medium mb-2">Suggested Development Options:</p>
-                                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                                  <li>Apartment: {feasibility.allowedFloors} with {feasibility.approximateUnits} units as per government norms</li>
-                                  <li>Commercial complex: {feasibility.allowedFloors} for rental/co-working space</li>
-                                </ul>
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
                 )}
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" onClick={() => setStep("preferences")}>Back</Button>
-                <Button size="lg" onClick={() => setStep("visibility")}>
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          )}
 
-          {step === "visibility" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-8"
-            >
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Step 4: Visibility & Monetization</h1>
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Basic Metrics (Free)</h3>
-                  <div className="bg-primary/5 rounded-lg p-4 space-y-2">
-                    {calculateFeasibility() && (
+                {activeSectionId === "far" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-base font-semibold mb-2 block">Zone (for FAR)</Label>
+                      <Select value={zone} onValueChange={(v) => setZone(v as FARZone)}>
+                        <SelectTrigger><SelectValue placeholder="Select zone" /></SelectTrigger>
+                        <SelectContent>
+                          {FAR_ZONE_OPTIONS.map((z) => (
+                            <SelectItem key={z.value} value={z.value}>{z.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {/* Premium FAR removed from JV/JD landowner form. */}
+                  </div>
+                  <div className="group rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-secondary/20 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-primary">FAR & Maximum Built-up Area (indicative)</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Fill plot dimensions, road width, and zone to get an instant estimate.
+                    </p>
+                    {farError && <p className="text-xs text-destructive">{farError}</p>}
+                    {farLoading && <p className="text-xs text-muted-foreground">Calculating FAR…</p>}
+                    {farResult && !farLoading && (
                       <>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">FAR</span>
-                          <span className="text-sm font-medium">{calculateFAR()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Total Built-up Area</span>
-                          <span className="text-sm font-medium">
-                            {Math.round(calculateFeasibility()?.totalBuildableArea || 0).toLocaleString()} sq ft
+                        <p className="text-xs text-muted-foreground">
+                          Base FAR {farResult.base_far.toFixed(2)} ={" "}
+                          <span className="font-medium text-foreground">
+                            Effective FAR {farResult.effective_far.toFixed(2)}
                           </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Saleable Area</span>
-                          <span className="text-sm font-medium">
-                            {Math.round(calculateFeasibility()?.netBuildableArea || 0).toLocaleString()} sq ft
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Maximum Built-up Area ≈{" "}
+                          <span className="font-medium text-foreground">
+                            {Math.round(farResult.total_buildable_area_sqft).toLocaleString()} sq ft
                           </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Approximate Location</span>
-                          <span className="text-sm font-medium">{googleMapsLocation ? "✓ Provided" : "Not provided"}</span>
-                        </div>
+                          {farResult.floors_allowed && ` · Typical height: ${farResult.floors_allowed}`}
+                        </p>
+                        {farResult.setbacks && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Setbacks (indicative): Front {farResult.setbacks.front_setback_m} m,
+                            Rear {farResult.setbacks.rear_setback_m} m,
+                            Sides {farResult.setbacks.side_setback_m} m · Coverage ~
+                            {farResult.setbacks.coverage_percent}%.
+                          </p>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-3"
+                          disabled={planImageLoading}
+                          onClick={async () => {
+                            if (!farResult) return;
+                            setPlanImageError(null);
+                            setPlanImageUrl(null);
+                            setPlanImageLoading(true);
+                            try {
+                              const res = await generatePlanImage({
+                                plot_area_sqft: farResult.plot_area_sqft,
+                                effective_far: farResult.effective_far,
+                                total_buildable_area_sqft: farResult.total_buildable_area_sqft,
+                                floors_allowed: farResult.floors_allowed,
+                                use_type: farResult.use_type as FARUseType,
+                                setbacks: farResult.setbacks
+                                  ? {
+                                      front_setback_m: farResult.setbacks.front_setback_m,
+                                      rear_setback_m: farResult.setbacks.rear_setback_m,
+                                      side_setback_m: farResult.setbacks.side_setback_m,
+                                      coverage_percent: farResult.setbacks.coverage_percent,
+                                    }
+                                  : undefined,
+                              });
+                              setPlanImageUrl(res.image_url);
+                            } catch (e) {
+                              setPlanImageError(e instanceof Error ? e.message : "Failed to generate plan preview.");
+                            } finally {
+                              setPlanImageLoading(false);
+                            }
+                          }}
+                        >
+                          {planImageLoading ? "Generating…" : "Generate plan preview"}
+                        </Button>
                       </>
+                    )}
+                    {planImageLoading && <p className="text-xs text-muted-foreground mt-2">Generating plan image…</p>}
+                    {planImageError && <p className="text-xs text-destructive mt-2">{planImageError}</p>}
+                    {planImageUrl && (
+                      <div className="mt-3 space-y-1">
+                        <img src={planImageUrl} alt="Indicative plan" className="w-full max-w-md rounded-lg border border-border" />
+                        <p className="text-[11px] text-muted-foreground">Indicative 2D layout only; not a sanctioned plan.</p>
+                      </div>
+                    )}
+                    {!farResult && !farLoading && (
+                      <p className="text-xs text-muted-foreground">
+                        FAR and total buildable area will be calculated based on plot size, road width, and zoning.
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      These are illustrative planning numbers based on 2024 2026 BBMP/BDA guidance, not a sanctioned plan.
+                    </p>
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "verification" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Name of the property owner</Label>
+                    <Input placeholder="Your full name" value={propertyOwnerName} onChange={(e) => setPropertyOwnerName(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">PID Number (Mandatory)</Label>
+                    <Input placeholder="Enter PID number" value={pidNumber} onChange={(e) => setPidNumber(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Which Khatha type is the land?</Label>
+                    <Input placeholder="e.g., A-Khatha, B-Khatha" value={khathaType} onChange={(e) => setKhathaType(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Is it E-Khatha?</Label>
+                    <Select value={ekhathaStatus} onValueChange={setEkhathaStatus}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Yes">Yes</SelectItem>
+                        <SelectItem value="No">No</SelectItem>
+                        <SelectItem value="In Process">In Process</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Tax paid information</Label>
+                    <Textarea placeholder="Details about tax payments" value={taxPaidDetails} onChange={(e) => setTaxPaidDetails(e.target.value)} rows={3} />
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "expectation" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">What is the client (landowner) seeking post-construction?</Label>
+                    <div className="space-y-2">
+                      {POST_CONSTRUCTION_OPTIONS.map((option) => (
+                        <div key={option} className="flex items-center space-x-2">
+                          <Checkbox id={`post-${option}`} checked={postConstructionExpectation.includes(option)} onCheckedChange={() => togglePostConstruction(option)} />
+                          <Label htmlFor={`post-${option}`} className="font-normal cursor-pointer">{option}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "planning" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Preferred construction model *</Label>
+                    <Select value={constructionMode} onValueChange={setConstructionMode}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select how you want to work with a builder / partner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONSTRUCTION_MODE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Do you have a preset idea of what to build?</Label>
+                    <RadioGroup value={hasPresetIdea} onValueChange={(v) => setHasPresetIdea(v as "yes" | "no")} className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="preset-yes" />
+                        <Label htmlFor="preset-yes" className="font-normal cursor-pointer">Yes → Explain (Free text)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="preset-no" />
+                        <Label htmlFor="preset-no" className="font-normal cursor-pointer">No → System suggests based on property data</Label>
+                      </div>
+                    </RadioGroup>
+                    {hasPresetIdea === "yes" && (
+                      <Textarea placeholder="Explain your idea" value={presetIdeaExplain} onChange={(e) => setPresetIdeaExplain(e.target.value)} rows={4} className="mt-3" />
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Expected timeline / intent to start</Label>
+                    <Select value={timeline} onValueChange={setTimeline}>
+                      <SelectTrigger><SelectValue placeholder="Select timeline" /></SelectTrigger>
+                      <SelectContent>
+                        {JV_TIMELINE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "poc" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Is there any point of contact (POC) for this project?</Label>
+                    <RadioGroup value={hasPoc} onValueChange={(v) => setHasPoc(v as "yes" | "no")} className="flex flex-wrap gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="jv-poc-yes" />
+                        <Label htmlFor="jv-poc-yes" className="font-normal cursor-pointer">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="jv-poc-no" />
+                        <Label htmlFor="jv-poc-no" className="font-normal cursor-pointer">No</Label>
+                      </div>
+                    </RadioGroup>
+                    {hasPoc === "yes" && (
+                      <div className="mt-4 space-y-3 pl-2 border-l-2 border-primary/20">
+                        <div>
+                          <Label className="text-sm font-medium mb-1 block">Name of the contact person</Label>
+                          <Input placeholder="Full name" value={pocName} onChange={(e) => setPocName(e.target.value)} className="max-w-md" />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-1 block">Mobile number</Label>
+                          <Input type="tel" placeholder="10-digit mobile number" value={pocMobile} onChange={(e) => setPocMobile(e.target.value)} className="max-w-md" />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-1 block">When can the POC show the property? (availability)</Label>
+                          <Input
+                            placeholder="e.g. Weekdays, Weekends, Any day"
+                            value={pocAvailability}
+                            onChange={(e) => setPocAvailability(e.target.value)}
+                            className="max-w-md"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-1 block">Preferred time slot for site visit</Label>
+                          <Input
+                            placeholder="e.g. Morning 9am 12pm, Afternoon 2 5pm"
+                            value={pocTiming}
+                            onChange={(e) => setPocTiming(e.target.value)}
+                            className="max-w-md"
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
+                )}
+              </StepFormLayout>
 
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Detailed Feasibility Report (Optional)</h3>
-                  <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
-                    <p className="text-sm font-medium text-accent mb-2">Priority Listing & Unlock Fee</p>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Unlock detailed feasibility report with comprehensive analysis and priority listing in marketplace.
-                    </p>
-                    <p className="text-xs font-medium text-accent">₹999 – ₹3,999 (based on property scale)</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      This unlocks comprehensive insights to help construction firms determine the most profitable use for your property.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" onClick={() => setStep("feasibility")}>Back</Button>
-                <Button size="lg" onClick={handleSubmit}>
-                  Publish to Marketplace
-                </Button>
-              </div>
+              {submitError && (
+                <p className="text-destructive text-sm mt-4">{submitError}</p>
+              )}
             </motion.div>
           )}
 

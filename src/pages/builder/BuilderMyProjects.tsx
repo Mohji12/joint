@@ -1,235 +1,226 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Hammer, Handshake, Palette, Wrench, Edit, Calendar, ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Compass, Loader2, MapPin, Ruler, SquareChartGantt, TrafficCone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { BuilderPortfolioProjectCard } from "@/components/BuilderPortfolioProjectCard";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  getProfessionalMatches,
+  getProfessionalProfile,
+  getProjectMarketplace,
+  listProfessionalPortfolio,
+  type MatchResponse,
+  type ProjectMarketplaceCard,
+  type ProfessionalPortfolioItem,
+} from "@/lib/api";
+import { cn } from "@/lib/utils";
 
-const TYPE_ICONS = {
-  "contract-construction": Hammer,
-  "joint-venture": Handshake,
-  "interior": Palette,
-  "reconstruction": Wrench,
+type BuilderMyProjectsProps = {
+  /** When true, hide full dashboard header (used inside Account > Projects). */
+  embedded?: boolean;
 };
 
-const TYPE_LABELS = {
-  "contract-construction": "Contract Construction",
-  "joint-venture": "JV / JD Developer",
-  "interior": "Interior Architect",
-  "reconstruction": "Reconstruction / Repair",
-};
-
-const TYPE_PATHS = {
-  "contract-construction": "/builder/contract-construction",
-  "joint-venture": "/builder/joint-venture",
-  "interior": "/builder/interior",
-  "reconstruction": "/builder/reconstruction",
-};
-
-const TYPE_COLORS = {
-  "contract-construction": "bg-green-500",
-  "joint-venture": "bg-green-600",
-  "interior": "bg-green-500",
-  "reconstruction": "bg-green-600",
-};
-
-const BuilderMyProjects = () => {
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [filteredProfiles, setFilteredProfiles] = useState<any[]>([]);
-  const [profileType, setProfileType] = useState<string>("all");
-  const [verified, setVerified] = useState<string>("all");
+const BuilderMyProjects = ({ embedded = false }: BuilderMyProjectsProps) => {
+  const { isAuthenticated, user } = useAuth();
+  const [items, setItems] = useState<ProfessionalPortfolioItem[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<
+    Array<{ match: MatchResponse; project: ProjectMarketplaceCard }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("builderProfiles");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setProfiles(parsed);
-      setFilteredProfiles(parsed);
+    let cancelled = false;
+    if (!isAuthenticated || user?.userType !== "builder") {
+      setItems([]);
+      setLoading(false);
+      setError(null);
+      return;
     }
-  }, []);
+    setLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const [portfolio, profile, projectRows] = await Promise.all([
+          listProfessionalPortfolio(),
+          getProfessionalProfile(),
+          getProjectMarketplace({ page: 1, page_size: 100 }),
+        ]);
+        const matchRows = await getProfessionalMatches(profile.id, 300);
+        const projectById = new Map(projectRows.map((row) => [row.project_id, row]));
+        const chosen = matchRows
+          .filter((m) => m.express_interest_builder)
+          .map((m) => ({ match: m, project: projectById.get(m.project_id) }))
+          .filter((row): row is { match: MatchResponse; project: ProjectMarketplaceCard } => Boolean(row.project));
+        if (!cancelled) {
+          setItems(portfolio);
+          setSelectedProjects(chosen);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setItems([]);
+          setSelectedProjects([]);
+          setError(e instanceof Error ? e.message : "Could not load projects");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.userType]);
 
-  useEffect(() => {
-    let filtered = [...profiles];
-    
-    if (profileType !== "all") {
-      filtered = filtered.filter(p => p.type === profileType);
-    }
-    
-    // For builders, we can add verification logic if needed
-    if (verified === "yes") {
-      filtered = filtered.filter(p => p.verified);
-    } else if (verified === "no") {
-      filtered = filtered.filter(p => !p.verified);
-    }
-    
-    setFilteredProfiles(filtered);
-  }, [profileType, verified, profiles]);
+  const titleClass = embedded
+    ? "text-2xl font-bold text-foreground"
+    : "text-4xl font-bold text-foreground";
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Professional Header */}
-      <header className="bg-black text-white border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link to="/" className="text-xl font-bold">Jointlly</Link>
-              <nav className="hidden md:flex items-center gap-6">
-                <Link to="/builder/dashboard" className="text-sm font-medium hover:text-green-400 transition-colors">Dashboard</Link>
-                <Link to="/builder/my-projects" className="text-sm font-medium text-green-400">My Profiles</Link>
-                <Link to="/builder/matches" className="text-sm font-medium hover:text-green-400 transition-colors">Matches</Link>
-                <Link to="/builder/options" className="text-sm font-medium hover:text-green-400 transition-colors">New Profile</Link>
-              </nav>
-            </div>
-            <Link to="/builder/dashboard">
-              <Button variant="outline" className="bg-transparent border-white text-white hover:bg-gray-800">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2">My Profiles</h1>
-          <p className="text-gray-600">Your submitted builder profiles. Update them anytime to match with suitable landowners.</p>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filter Sidebar */}
-          <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-8">
-              <h2 className="text-lg font-semibold text-black mb-6">Filter</h2>
-              
-              <div className="space-y-6">
-                {/* Profile Type */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Profile Type</label>
-                  <Select value={profileType} onValueChange={setProfileType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="contract-construction">Contract Construction</SelectItem>
-                      <SelectItem value="joint-venture">JV / JD Developer</SelectItem>
-                      <SelectItem value="interior">Interior Architect</SelectItem>
-                      <SelectItem value="reconstruction">Reconstruction</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Verified */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Verified</label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="verified-yes" 
-                        checked={verified === "yes"}
-                        onCheckedChange={() => setVerified(verified === "yes" ? "all" : "yes")}
-                      />
-                      <label htmlFor="verified-yes" className="text-sm text-gray-600 cursor-pointer">Yes</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="verified-no" 
-                        checked={verified === "no"}
-                        onCheckedChange={() => setVerified(verified === "no" ? "all" : "no")}
-                      />
-                      <label htmlFor="verified-no" className="text-sm text-gray-600 cursor-pointer">No</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Profiles Grid */}
-          <div className="flex-1">
-            {filteredProfiles.length === 0 ? (
-              <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-                <p className="text-gray-600 mb-4">No profiles found</p>
-                <Link to="/builder/options">
-                  <Button className="bg-black text-white hover:bg-gray-800">
-                    Create New Profile
-                  </Button>
+    <div className={embedded ? "min-h-0" : "w-full"}>
+      {!embedded && (
+        <header className="bg-primary text-primary-foreground border-b border-primary/20">
+          <div className="max-w-7xl mx-auto w-full py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-8">
+                <Link to="/" className="text-xl font-bold">
+                  Jointlly
                 </Link>
+                <nav className="hidden md:flex items-center gap-6">
+                  <Link
+                    to="/builder/dashboard"
+                    className="text-sm font-medium hover:text-primary-foreground/90 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/builder/matches"
+                    className="text-sm font-medium hover:text-primary-foreground/90 transition-colors"
+                  >
+                    Your matches
+                  </Link>
+                  <Link
+                    to="/builder/marketplace"
+                    className="text-sm font-medium hover:text-primary-foreground/90 transition-colors"
+                  >
+                    Opportunities
+                  </Link>
+                </nav>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProfiles.map((profile, index) => {
-                  const Icon = TYPE_ICONS[profile.type as keyof typeof TYPE_ICONS] || Hammer;
-                  const label = TYPE_LABELS[profile.type as keyof typeof TYPE_LABELS] || profile.type;
-                  const path = TYPE_PATHS[profile.type as keyof typeof TYPE_PATHS] || "/builder/dashboard";
-                  const color = TYPE_COLORS[profile.type as keyof typeof TYPE_COLORS] || "bg-green-500";
-                  
-                  return (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-shadow group"
-                    >
-                      {/* Profile Image */}
-                      <div className={`h-48 ${color} flex items-center justify-center relative`}>
-                        <Icon className="w-16 h-16 text-white opacity-80" />
-                        {profile.verified && (
-                          <div className="absolute top-3 right-3 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                            Verified
-                          </div>
+              <Link to="/builder/dashboard">
+                <Button variant="outline" className="border-primary-foreground/60 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </header>
+      )}
+
+      <main className={embedded ? "w-full" : "max-w-7xl mx-auto w-full py-8"}>
+        <div className={embedded ? "mb-6" : "mb-8"}>
+          <h1 className={titleClass}>Projects</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Your selected opportunity projects and portfolio projects are shown here.
+          </p>
+        </div>
+
+        {!isAuthenticated || user?.userType !== "builder" ? (
+          <p className="text-sm text-muted-foreground">Sign in as a builder to see your projects.</p>
+        ) : loading ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            <span>Loading projects…</span>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-foreground">Selected Landowner Projects</h2>
+              {selectedProjects.length === 0 ? (
+                <Card className="border-dashed border-border bg-muted/30">
+                  <CardContent className="px-6 py-8 text-center text-sm text-muted-foreground">
+                    No selected landowner projects yet. Select a card in Opportunities to see it here.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {selectedProjects.map(({ match, project }) => {
+                    const locationLine = [project.city, project.ward, project.landmark].filter(Boolean).join(" · ");
+                    const formatType = (type: string) => type.replaceAll("_", " ");
+                    const detailRows: Array<{ label: string; value: string; icon: React.ComponentType<{ className?: string }> }> = [
+                      { label: "Project Type", value: formatType(project.project_type), icon: SquareChartGantt },
+                      { label: "Maps", value: project.landmark || project.city || "Not specified", icon: MapPin },
+                      ...(project.plot_area_sqft != null
+                        ? [{ label: "Size", value: `${Math.round(project.plot_area_sqft).toLocaleString()} sq ft`, icon: Ruler }]
+                        : []),
+                      ...(project.intent ? [{ label: "Facing/Intent", value: project.intent, icon: Compass }] : []),
+                      ...(project.road_width_ft != null
+                        ? [{ label: "Road Width", value: `${project.road_width_ft} ft`, icon: TrafficCone }]
+                        : []),
+                      { label: "PID Verified", value: project.has_pid_verification ? "Yes" : "No", icon: BadgeCheck },
+                      { label: "Tax Paid", value: project.tax_paid ? "Yes" : "No", icon: BadgeCheck },
+                    ];
+
+                    return (
+                      <article
+                        key={match.id}
+                        className={cn(
+                          "group flex flex-col overflow-hidden rounded-2xl border border-[#d9d4c8] bg-[#f8f7f3]",
+                          "shadow-[0_2px_8px_rgba(16,24,40,0.08)]"
                         )}
-                      </div>
-                      
-                      {/* Profile Details */}
-                      <div className="p-5">
-                        <h3 className="font-semibold text-black text-lg mb-2">{label}</h3>
-                        
-                        <div className="flex items-start gap-2 mb-3">
-                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-gray-600">{profile.companyName}</p>
-                        </div>
-                        
-                        <div className="space-y-1 mb-4 text-xs text-gray-500">
-                          {profile.yearsExperience && (
-                            <p><span className="font-medium">Experience:</span> {profile.yearsExperience} years</p>
-                          )}
-                          {profile.address && (
-                            <p><span className="font-medium">Location:</span> {profile.address}</p>
-                          )}
-                          {profile.projectTypes && profile.projectTypes.length > 0 && (
-                            <p><span className="font-medium">Types:</span> {profile.projectTypes.slice(0, 2).join(", ")}</p>
-                          )}
-                          {profile.projectsCompleted && (
-                            <p><span className="font-medium">Completed:</span> {profile.projectsCompleted} projects</p>
-                          )}
-                        </div>
-                        
-                        {profile.submittedAt && (
-                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(profile.submittedAt).toLocaleDateString()}</span>
+                      >
+                        <div className="border-b border-[#e7e3d9] bg-gradient-to-r from-[#1f4a36] via-[#2e6247] to-[#2f5f45] px-4 py-2.5 text-white">
+                          <div className="flex items-center justify-between gap-3">
+                            <h3 className="font-semibold tracking-tight text-[18px]">Property</h3>
+                            <span className="rounded-full border border-[#c8a15a] bg-[#f4efe3] px-2.5 py-0.5 text-[11px] font-semibold text-[#2e6046]">
+                              Selected
+                            </span>
                           </div>
-                        )}
-                        
-                        <Link to={path}>
-                          <Button variant="outline" className="w-full group-hover:bg-black group-hover:text-white transition-colors">
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Profile
-                          </Button>
-                        </Link>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                        </div>
+                        <div className="space-y-2.5 px-4 py-3">
+                          <p className="flex items-start gap-1.5 text-[12px] text-[#253629]">
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#b0893d]" />
+                            <span className="font-medium">{locationLine || "Location not specified"}</span>
+                          </p>
+                          <div className="h-px w-full bg-[#e7e3d9]" />
+                          <div className="grid grid-cols-[120px_1fr] gap-x-2.5 gap-y-1 text-[12px]">
+                            {detailRows.map((row) => (
+                              <div key={row.label} className="contents">
+                                <p className="flex items-center gap-1.5 font-semibold text-[#2a3e30]">
+                                  <row.icon className="h-3.5 w-3.5 text-[#b0893d]" />
+                                  {row.label}
+                                </p>
+                                <p className="break-words border-l border-[#ddd5c5] pl-2.5 font-medium text-[#27342b]">
+                                  {row.value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {items.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-lg font-semibold text-foreground">Portfolio Projects</h2>
+                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {items.map((p) => (
+                    <BuilderPortfolioProjectCard key={p.id} project={p} />
+                  ))}
+                </div>
+              </section>
             )}
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

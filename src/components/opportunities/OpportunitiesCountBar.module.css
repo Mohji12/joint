@@ -1,0 +1,91 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid var(--opp-border, #e5e7eb);
+  border-radius: var(--opp-radius, 12px);
+  background: var(--opp-surface, #fff);
+}
+
+.countBlock {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.countValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--opp-text, #111827);
+  line-height: 1;
+}
+
+.countLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--opp-muted, #6b7280);
+}
+
+.countHint {
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: var(--opp-muted, #6b7280);
+}
+
+.legendTitle {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.25rem;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.swatchHigh {
+  background: var(--opp-match-high, #16a34a);
+}
+
+.swatchMedium {
+  background: var(--opp-match-medium, #f59e0b);
+}
+
+.swatchLow {
+  background: var(--opp-match-low, #6b7280);
+}
+
+@media (max-width: 639px) {
+  .bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .legend {
+    width: 100%;
+    row-gap: 0.4rem;
+  }
+}

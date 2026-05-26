@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User
-from app.utils.constants import Role
+from app.models.payment import Transaction
+from app.utils.constants import Role, TransactionType, TransactionStatus
 from app.utils.jwt import decode_token
 from app.exceptions import UnauthorizedError, ForbiddenError
 
@@ -62,3 +63,40 @@ require_landowner = require_role(Role.LANDOWNER)
 require_professional = require_role(Role.PROFESSIONAL)
 require_admin = require_role(Role.ADMIN)
 require_authenticated = get_current_user
+
+
+async def require_landowner_entry_paid(
+    current_user: User = Depends(require_landowner),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Enforce one-time LANDOWNER_ENTRY payment for landowners.
+    Non-landowner users are not blocked by this dependency.
+    """
+    result = await db.execute(
+        select(Transaction.id).where(
+            Transaction.user_id == current_user.id,
+            Transaction.transaction_type == TransactionType.LANDOWNER_ENTRY,
+            Transaction.status == TransactionStatus.SUCCESS,
+        ).limit(1)
+    )
+    paid_txn = result.scalar_one_or_none()
+    if paid_txn is None:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Landowner entry fee payment (₹99) is required to access this resource.",
+        )
+    return current_user
+
+
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """Return current user if valid token present, else None. Use for form submissions that work with or without auth."""
+    if credentials is None:
+        return None
+    try:
+        return await get_current_user(credentials, db)
+    except Exception:
+        return None

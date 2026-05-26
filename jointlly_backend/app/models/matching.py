@@ -4,8 +4,13 @@ Matching models
 from uuid import uuid4
 from datetime import datetime
 from sqlalchemy import (
-    Column, Float, DateTime, ForeignKey,
-    Enum as SQLEnum
+    Column,
+    Float,
+    DateTime,
+    ForeignKey,
+    String,
+    Boolean,
+    Enum as SQLEnum,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -37,12 +42,28 @@ class Match(Base):
         index=True
     )
     match_score = Column(Float, nullable=False, index=True)
+    estimated_cost = Column(Float, nullable=True)  # totalBUA * builder avg price_per_sqft
     status = Column(
         SQLEnum(MatchStatus, name="match_status"),
         default=MatchStatus.PENDING,
         nullable=False,
         index=True
     )
+    # Mutual interest flags and timestamps
+    express_interest_landowner = Column(Boolean, default=False, nullable=False)
+    express_interest_builder = Column(Boolean, default=False, nullable=False)
+    mutual_interest_at = Column(DateTime, nullable=True)
+    # Gatekeeper unlock and monitoring timestamps
+    gatekeeper_unlocked_at = Column(DateTime, nullable=True)
+    t7_email_sent_at = Column(DateTime, nullable=True)
+    t30_email_sent_at = Column(DateTime, nullable=True)
+    # Deal & success fee fields (for Construction/JD)
+    deal_value = Column(Float, nullable=True)
+    deal_status = Column(String(50), nullable=True)
+    success_fee_percent = Column(Float, nullable=True)
+    success_fee_amount_total = Column(Float, nullable=True)
+    success_fee_amount_builder = Column(Float, nullable=True)
+    success_fee_amount_landowner = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime,
@@ -55,6 +76,7 @@ class Match(Base):
     project = relationship("Project", back_populates="matches")
     professional = relationship("ProfessionalProfile", back_populates="matches")
     match_score_details = relationship("MatchScore", back_populates="match", uselist=False, cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="match")
     
     def __repr__(self) -> str:
         return f"<Match(id={self.id}, project_id={self.project_id}, professional_id={self.professional_id}, score={self.match_score})>"
@@ -84,6 +106,8 @@ class MatchScore(Base):
     pricing_score = Column(Float, nullable=True)
     capability_score = Column(Float, nullable=True)
     verification_score = Column(Float, nullable=True)
+    proximity_score = Column(Float, nullable=True)
+    response_speed_score = Column(Float, nullable=True)
     total_score = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     

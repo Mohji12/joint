@@ -1,7 +1,14 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, X, Building2, FileCheck, MapPin, Briefcase, ImageIcon, Banknote, MapPinned, Users, Handshake } from "lucide-react";
+import {
+  getAccessToken,
+  uploadFileAndGetUrl,
+  submitBuilderJointVenture,
+  upsertProfessionalProfileFromBuilderForm,
+  getProfessionalProfile,
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,45 +22,70 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { StepFormLayout, type StepFormSection } from "@/components/StepFormLayout";
+import { CityAreaInput } from "@/components/CityAreaInput";
+import { BangaloreMap } from "@/components/BangaloreMap";
+import { ProjectMediaUpload } from "@/components/ProjectMediaUpload";
+// Pricing step removed from this form (was section 10).
 
 const PROJECT_CAPS = [
-  "Residential Construction – Duplexes, villas, multi-story buildings",
-  "Commercial Construction – Hotels, offices, schools, rental/PG spaces",
-  "Industrial Construction – Warehouses, factories, industrial buildings",
+  "Residential Construction",
+  "Commercial Construction",
+  "Industrial Construction",
 ];
 
-const SUBCONTRACTOR_SCOPES = ["Civil Works", "Flooring Works", "Painting Works", "Carpentry & Woodwork", "Other (please specify)"];
-const TYPICAL_SIZE_OPTIONS = ["Up to 5,000 sft", "5,000 – 25,000 sft", "25,000 – 1,00,000 sft", "1,00,000+ sft", "Other (please specify)"];
 const PROJECT_SCALE_OPTIONS = [
-  "Small-scale projects (up to ₹5 Cr)",
-  "Medium-scale projects (₹5 – 20 Cr)",
-  "Large-scale projects (₹20 – 50 Cr)",
-  "Very large-scale projects (above ₹50 Cr)",
+  "Up to ₹5 Cr",
+  "₹5   20 Cr",
+  "₹20   50 Cr",
+  "Above ₹50 Cr",
 ];
-const TEAM_SIZE_OPTIONS = ["Small (1–20 members)", "Medium (21–50 members)", "Large (51–100 members)", "Very Large (100+ members)"];
+
+const TEAM_SIZE_OPTIONS = [
+  "Small (1 20 members)",
+  "Medium (21 50 members)",
+  "Large (51 100 members)",
+  "Very Large (100+ members)",
+];
+
 const JV_ARRANGEMENT_OPTIONS = [
-  "Revenue Sharing – Share rental income from the project with the landowner",
-  "Built-up Area (SFT) Sharing – Allocate a pre-agreed portion of the constructed area to the landowner",
-  "Sell and Share Entire Project – Sell the project and share the total proceeds with the landowner",
+  "Revenue Sharing",
+  "Built-up Area Sharing",
+  "Sell and Share Entire Project",
+];
+
+const PROJECT_TYPE_OPTIONS = ["Residential", "Commercial", "Industrial", "Interior"];
+
+const SECTIONS: StepFormSection[] = [
+  { id: "basic", label: "Basic Details", icon: Building2 },
+  { id: "licenses", label: "Licenses & Registrations", icon: FileCheck },
+  { id: "office", label: "Office Location", icon: MapPin },
+  { id: "capabilities", label: "Project Capabilities", icon: Briefcase },
+  { id: "experience", label: "Experience & Portfolio", icon: ImageIcon },
+  { id: "scale", label: "Financial Project Scale", icon: Banknote },
+  { id: "location", label: "Location Radius", icon: MapPinned },
+  { id: "team", label: "Team Strength", icon: Users },
+  { id: "arrangement", label: "JV/JD Arrangement Type", icon: Handshake },
 ];
 
 const BuilderJointVenture = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editProfileId = searchParams.get("edit");
   const [step, setStep] = useState<"brief" | "form" | "done">("brief");
+  const [activeSectionId, setActiveSectionId] = useState(SECTIONS[0].id);
   const [companyName, setCompanyName] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
   const [entityType, setEntityType] = useState("");
-  const [licenseRera, setLicenseRera] = useState("");
+  const [builderLicense, setBuilderLicense] = useState("");
+  const [reraRegistration, setReraRegistration] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [address, setAddress] = useState("");
   const [projectCaps, setProjectCaps] = useState<string[]>([]);
   const [preferredLocations, setPreferredLocations] = useState("");
   const [projectsCompleted, setProjectsCompleted] = useState("");
-  const [teamType, setTeamType] = useState<"in-house" | "subcontractors" | "">("");
-  const [subcontractorScopes, setSubcontractorScopes] = useState<string[]>([]);
-  const [typicalSize, setTypicalSize] = useState("");
-  const [reraProjects, setReraProjects] = useState("");
   const [reraYesNo, setReraYesNo] = useState<"yes" | "no" | "">("");
+  const [reraProjects, setReraProjects] = useState("");
   const [projectScale, setProjectScale] = useState("");
   const [teamSize, setTeamSize] = useState("");
   const [jvArrangements, setJvArrangements] = useState<string[]>([]);
@@ -63,22 +95,229 @@ const BuilderJointVenture = () => {
   const [radius2, setRadius2] = useState("");
   const [location3, setLocation3] = useState("");
   const [radius3, setRadius3] = useState("");
+  const [recentProjects, setRecentProjects] = useState<
+    Array<{ nameLocation: string; builtUpSft: string; type: string; durationMonths: string; images: File[]; video: File | null }>
+  >([
+    { nameLocation: "", builtUpSft: "", type: "", durationMonths: "", images: [], video: null },
+    { nameLocation: "", builtUpSft: "", type: "", durationMonths: "", images: [], video: null },
+    { nameLocation: "", builtUpSft: "", type: "", durationMonths: "", images: [], video: null },
+  ]);
 
   const toggleProjectCap = (t: string) => {
     setProjectCaps((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
-  };
-  const toggleSub = (s: string) => {
-    setSubcontractorScopes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   };
   const toggleJv = (j: string) => {
     setJvArrangements((prev) => (prev.includes(j) ? prev.filter((x) => x !== j) : [...prev, j]));
   };
 
+  const updateRecentProject = (index: number, field: string, value: string | File[] | File | null) => {
+    setRecentProjects((prev) => {
+      const next = [...prev];
+      const proj = { ...next[index] };
+      if (field === "images") proj.images = value as File[];
+      else if (field === "video") proj.video = value as File | null;
+      else (proj as Record<string, string>)[field] = value as string;
+      next[index] = proj;
+      return next;
+    });
+  };
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!editProfileId) return;
+    let cancelled = false;
+
+    const loadFromApi = async () => {
+      const token = getAccessToken();
+      if (token) {
+        try {
+          const profile = await getProfessionalProfile();
+          if (cancelled) return;
+          if (String(profile.id) === editProfileId) {
+            setCompanyName(profile.company_name || "");
+            setYearsExperience(profile.experience_years?.toString() || "");
+            setAddress(profile.city || "");
+            setPreferredLocations(profile.location_preferences?.join(", ") || "");
+            setStep("form");
+            return;
+          }
+        } catch {
+          // Fall through to localStorage
+        }
+      }
+
+      const stored = localStorage.getItem("builderProfiles");
+      if (!stored) return;
+      const list = JSON.parse(stored);
+      const existing = list.find((p: Record<string, unknown>) => p.profileId === editProfileId && (p.type as string) === "joint-venture");
+      if (!existing) return;
+      const e = existing as Record<string, unknown>;
+      setCompanyName((e.companyName as string) || "");
+      setYearsExperience((e.yearsExperience as string) || "");
+      setEntityType((e.entityType as string) || "");
+      setBuilderLicense((e.builderLicense as string) || "");
+      setReraRegistration((e.reraRegistration as string) || "");
+      setGstNumber((e.gstNumber as string) || "");
+      setAddress((e.address as string) || "");
+      setProjectCaps(Array.isArray(e.projectCaps) ? (e.projectCaps as string[]) : []);
+      setPreferredLocations((e.preferredLocations as string) || "");
+      setProjectsCompleted((e.projectsCompleted as string) || "");
+      setReraYesNo(((e.reraYesNo as string) || "") as "yes" | "no" | "");
+      setReraProjects((e.reraProjects as string) || "");
+      setProjectScale((e.projectScale as string) || "");
+      setTeamSize((e.teamSize as string) || "");
+      setJvArrangements(Array.isArray(e.jvArrangements) ? (e.jvArrangements as string[]) : []);
+      const pricing = e.pricing as Record<string, Record<string, Record<string, string>>> | undefined;
+      if (pricing?.residential) {
+        setResidentialPackages((prev) => prev.map((r) => ({ ...r, ...pricing.residential?.[r.id] })));
+      }
+      if (pricing?.commercial) {
+        setCommercialPackages((prev) => prev.map((r) => ({ ...r, ...pricing.commercial?.[r.id] })));
+      }
+      if (pricing?.industrial) {
+        setIndustrialPackages((prev) => prev.map((r) => ({ ...r, ...pricing.industrial?.[r.id] })));
+      }
+      const rp = (e.recentProjects as Array<Record<string, unknown>>) || [];
+      setRecentProjects(
+        [0, 1, 2].map((i) => ({
+          nameLocation: (rp[i]?.nameLocation as string) || "",
+          builtUpSft: (rp[i]?.builtUpSft as string) || "",
+          type: (rp[i]?.type as string) || "",
+          durationMonths: (rp[i]?.durationMonths as string) || "",
+          images: [],
+          video: null,
+        }))
+      );
+      setStep("form");
+    };
+
+    loadFromApi();
+    return () => { cancelled = true; };
+  }, [editProfileId]);
+
+  const handleSubmit = async () => {
+    const token = getAccessToken();
+    if (token) {
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        const recentProjectsWithUrls = await Promise.all(
+          recentProjects.map(async (p) => {
+            const imageUrls: string[] = [];
+            for (const file of p.images) {
+              const url = await uploadFileAndGetUrl(file, "builder/jv");
+              imageUrls.push(url);
+            }
+            let videoUrl: string | undefined;
+            if (p.video) {
+              videoUrl = await uploadFileAndGetUrl(p.video, "builder/jv");
+            }
+            return {
+              name_location: p.nameLocation,
+              built_up_sft: p.builtUpSft,
+              type: p.type,
+              duration_months: p.durationMonths,
+              image_urls: imageUrls,
+              video_url: videoUrl,
+            };
+          })
+        );
+        await upsertProfessionalProfileFromBuilderForm({
+          company_name: companyName,
+          years_experience: yearsExperience,
+          entity_type: entityType || undefined,
+          gst_number: gstNumber || undefined,
+          address,
+          project_caps: projectCaps,
+          preferred_locations: preferredLocations || undefined,
+          location1: location1 || undefined,
+          location2: location2 || undefined,
+          location3: location3 || undefined,
+          capability_type: "JV_JD",
+        });
+        try {
+          await submitBuilderJointVenture({
+            company_name: companyName,
+            years_experience: yearsExperience,
+            entity_type: entityType || undefined,
+            builder_license: builderLicense || undefined,
+            rera_registration: reraRegistration || undefined,
+            gst_number: gstNumber || undefined,
+            address,
+            project_caps: projectCaps,
+            preferred_locations: preferredLocations || undefined,
+            projects_completed: projectsCompleted || undefined,
+            rera_yes_no: reraYesNo || undefined,
+            rera_projects: reraYesNo === "yes" ? reraProjects : undefined,
+            project_scale: projectScale || undefined,
+            team_size: teamSize || undefined,
+            jv_arrangements: jvArrangements,
+            location1: location1 || undefined,
+            radius1: radius1 || undefined,
+            location2: location2 || undefined,
+            radius2: radius2 || undefined,
+            location3: location3 || undefined,
+            radius3: radius3 || undefined,
+            recent_projects: recentProjectsWithUrls,
+          });
+        } catch {
+          // Form audit is best-effort; profile already created
+        }
+        setStep("done");
+      } catch (e) {
+        setSubmitError(e instanceof Error ? e.message : "Submit failed");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+    const formData = {
+      profileId: editProfileId || `builder-${Date.now()}-jv`,
+      type: "joint-venture",
+      companyName,
+      yearsExperience,
+      entityType,
+      builderLicense: builderLicense || undefined,
+      reraRegistration: reraRegistration || undefined,
+      gstNumber: gstNumber || undefined,
+      address,
+      projectCaps,
+      preferredLocations,
+      projectsCompleted: projectsCompleted || undefined,
+      reraYesNo,
+      reraProjects: reraYesNo === "yes" ? reraProjects : undefined,
+      projectScale,
+      teamSize,
+      jvArrangements,
+      recentProjects: recentProjects.map((p) => ({
+        nameLocation: p.nameLocation,
+        builtUpSft: p.builtUpSft,
+        type: p.type,
+        durationMonths: p.durationMonths,
+        imageCount: p.images.length,
+        hasVideo: !!p.video,
+      })),
+      submittedAt: new Date().toISOString(),
+    };
+    const existing = JSON.parse(localStorage.getItem("builderProfiles") || "[]");
+    if (editProfileId) {
+      const idx = existing.findIndex((p: Record<string, unknown>) => p.profileId === editProfileId);
+      if (idx >= 0) existing[idx] = formData;
+      else existing.push(formData);
+    } else {
+      existing.push(formData);
+    }
+    localStorage.setItem("builderProfiles", JSON.stringify(existing));
+    setStep("done");
+  };
+
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <section className="relative py-32 overflow-hidden">
+    <div className="w-full overflow-x-hidden">
+      <section className="relative py-6 sm:py-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background" />
-        <div className="relative z-10 max-w-3xl mx-auto px-6">
+        <div className="relative z-10 max-w-3xl mx-auto w-full">
           <Link to="/builder/options" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-12 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to options
           </Link>
@@ -86,9 +325,9 @@ const BuilderJointVenture = () => {
           {step === "brief" && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">JV / JD Development</h1>
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  A Joint Venture (JV) / Joint Development (JD) is a structured development model where the landowner contributes the land, and the developer manages project capital, statutory approvals, design, and construction. Project returns are shared through a predefined structure—typically revenue sharing or built-up area allocation—as outlined in the development agreement. This model allows developers to execute projects without upfront land acquisition while leveraging their financial strength and execution capability.
+              <div className="p-6 md:p-8 space-y-4">
+                <p className="text-foreground leading-relaxed">
+                  A Joint Venture (JV) / Joint Development (JD) is a structured development model where the landowner contributes the land, and the developer manages project capital, statutory approvals, design, and construction. Project returns are shared through a predefined structure typically revenue sharing or built-up area allocation as outlined in the development agreement. This model allows developers to execute projects without upfront land acquisition while leveraging their financial strength and execution capability.
                 </p>
               </div>
               <Button size="lg" onClick={() => setStep("form")}>Continue to form</Button>
@@ -96,123 +335,162 @@ const BuilderJointVenture = () => {
           )}
 
           {step === "form" && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Builder / Construction Company Information</h1>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">JV / JD Developer</h1>
 
-              <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-6">
-                <h3 className="text-lg font-semibold text-foreground">Basic Details</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
+              <StepFormLayout
+                sections={SECTIONS}
+                activeSectionId={activeSectionId}
+                onePagePerSection
+                alwaysShowSubmit
+                onPrev={() => {
+                  const idx = SECTIONS.findIndex((s) => s.id === activeSectionId);
+                  if (idx <= 0) setStep("brief");
+                  else setActiveSectionId(SECTIONS[idx - 1].id);
+                }}
+                onNext={() => {
+                  const idx = SECTIONS.findIndex((s) => s.id === activeSectionId);
+                  if (idx < SECTIONS.length - 1) setActiveSectionId(SECTIONS[idx + 1].id);
+                }}
+                onSubmit={handleSubmit}
+                submitLabel="Save"
+                submitDisabled={submitting}
+                isSubmitting={submitting}
+              >
+                {activeSectionId === "basic" && (
+                <div className="space-y-6">
                   <div>
-                    <Label className="mb-2 block">Name of your construction company or sole proprietorship</Label>
+                    <Label className="text-base font-semibold mb-2 block">Name of your construction company or sole proprietorship</Label>
                     <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Company name" />
                   </div>
                   <div>
-                    <Label className="mb-2 block">Number of years in operation or individual work experience</Label>
+                    <Label className="text-base font-semibold mb-2 block">Number of years in operation or individual work experience</Label>
                     <Input value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} placeholder="Years" />
                   </div>
-                </div>
-                <div>
-                  <Label className="mb-2 block">Business entity type</Label>
-                  <Select value={entityType} onValueChange={setEntityType}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Individual">Individual</SelectItem>
-                      <SelectItem value="Partnership">Partnership</SelectItem>
-                      <SelectItem value="LLP">LLP</SelectItem>
-                      <SelectItem value="Private Limited">Private Limited</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mt-6">Licenses & Registrations (Optional)</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <Label className="mb-2 block">Builder/Contractor License (e.g., KPWD) & RERA if applicable</Label>
-                    <Input value={licenseRera} onChange={(e) => setLicenseRera(e.target.value)} placeholder="License / RERA" />
+                    <Label className="text-base font-semibold mb-2 block">Business entity type:</Label>
+                    <Select value={entityType} onValueChange={setEntityType}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Individual">Individual</SelectItem>
+                        <SelectItem value="Partnership">Partnership</SelectItem>
+                        <SelectItem value="LLP">LLP</SelectItem>
+                        <SelectItem value="Private Limited">Private Limited</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "licenses" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Builder / Contractor License (KPWD or equivalent)</Label>
+                    <Input value={builderLicense} onChange={(e) => setBuilderLicense(e.target.value)} placeholder="License details" />
                   </div>
                   <div>
-                    <Label className="mb-2 block">GST registration number</Label>
+                    <Label className="text-base font-semibold mb-2 block">RERA registration (if applicable)</Label>
+                    <Input value={reraRegistration} onChange={(e) => setReraRegistration(e.target.value)} placeholder="RERA registration" />
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">GST registration number (if applicable)</Label>
                     <Input value={gstNumber} onChange={(e) => setGstNumber(e.target.value)} placeholder="GST number" />
                   </div>
                 </div>
-                <div>
-                  <Label className="mb-2 block">Registered office or physical address in Bangalore</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Address" />
+                )}
+
+                {activeSectionId === "office" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Registered office or physical address in Bangalore</Label>
+                    <CityAreaInput value={address} onChange={setAddress} placeholder="Select area (e.g. HSR Layout, Whitefield)" />
+                  </div>
+                  <BangaloreMap className="mt-4" height={320} area={address} />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mt-6">Project Capabilities</h3>
-                <div>
-                  <Label className="mb-2 block">Types of projects you work on (Select all that apply)</Label>
-                  <div className="space-y-2">
-                    {PROJECT_CAPS.map((t) => (
-                      <div key={t} className="flex items-center space-x-2">
-                        <Checkbox id={`cap-${t}`} checked={projectCaps.includes(t)} onCheckedChange={() => toggleProjectCap(t)} />
-                        <Label htmlFor={`cap-${t}`} className="font-normal cursor-pointer text-sm">{t}</Label>
+                )}
+
+                {activeSectionId === "capabilities" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Types of projects you work on (Select all that apply):</Label>
+                    <div className="space-y-2">
+                      {PROJECT_CAPS.map((t) => (
+                        <div key={t} className="flex items-center space-x-2">
+                          <Checkbox id={`cap-${t}`} checked={projectCaps.includes(t)} onCheckedChange={() => toggleProjectCap(t)} />
+                          <Label htmlFor={`cap-${t}`} className="font-normal cursor-pointer text-sm">{t}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Preferred project locations</Label>
+                    <Textarea value={preferredLocations} onChange={(e) => setPreferredLocations(e.target.value)} placeholder="Areas where you prefer to take up projects" rows={2} />
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "experience" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Total number of projects completed</Label>
+                    <Input value={projectsCompleted} onChange={(e) => setProjectsCompleted(e.target.value)} placeholder="Number" />
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Have you commenced any RERA-registered projects?</Label>
+                    <RadioGroup value={reraYesNo} onValueChange={(v) => setReraYesNo(v as "yes" | "no")} className="space-y-2 flex flex-row gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="rera-yes" />
+                        <Label htmlFor="rera-yes" className="font-normal cursor-pointer">Yes (How many?)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="rera-no" />
+                        <Label htmlFor="rera-no" className="font-normal cursor-pointer">No</Label>
+                      </div>
+                    </RadioGroup>
+                    {reraYesNo === "yes" && (
+                      <Input className="mt-2 w-32" placeholder="How many?" value={reraProjects} onChange={(e) => setReraProjects(e.target.value)} />
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">Kindly provide details for up to 3 most recent completed projects:</Label>
+                    <p className="text-sm text-muted-foreground mb-4">For each project: Name / Location, Built-up Area (sft), Type of Building, Duration (months), 3 images + 1 video. You can upload or take a live photo from camera.</p>
+                    {recentProjects.map((proj, idx) => (
+                      <div key={idx} className="border border-border rounded-lg p-4 mb-4 space-y-3">
+                        <p className="text-sm font-medium text-foreground">Project {idx + 1}</p>
+                        <CityAreaInput placeholder="Area (e.g. HSR Layout, Koramangala)" value={proj.nameLocation} onChange={(v) => updateRecentProject(idx, "nameLocation", v)} />
+                        <div className="space-y-3">
+                          <div>
+                            <Label className="text-sm text-muted-foreground mb-1 block">Built-up Area (sft)</Label>
+                            <Input placeholder="Built-up Area (sft)" value={proj.builtUpSft} onChange={(e) => updateRecentProject(idx, "builtUpSft", e.target.value)} />
+                          </div>
+                          <div>
+                            <Label className="text-sm text-muted-foreground mb-1 block">Type of Building</Label>
+                            <Select value={proj.type} onValueChange={(v) => updateRecentProject(idx, "type", v)}>
+                              <SelectTrigger><SelectValue placeholder="Type of Building" /></SelectTrigger>
+                              <SelectContent>
+                                {PROJECT_TYPE_OPTIONS.map((o) => (
+                                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <Input placeholder="Duration (months)" value={proj.durationMonths} onChange={(e) => updateRecentProject(idx, "durationMonths", e.target.value)} />
+                        <ProjectMediaUpload
+                          images={proj.images}
+                          video={proj.video}
+                          onImagesChange={(files) => updateRecentProject(idx, "images", files)}
+                          onVideoChange={(file) => updateRecentProject(idx, "video", file)}
+                        />
                       </div>
                     ))}
                   </div>
                 </div>
-                <div>
-                  <Label className="mb-2 block">Preferred project locations (areas where you prefer to take up projects)</Label>
-                  <Textarea value={preferredLocations} onChange={(e) => setPreferredLocations(e.target.value)} placeholder="Areas" rows={2} />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mt-6">Experience & Portfolio</h3>
-                <div>
-                  <Label className="mb-2 block">Total number of projects completed</Label>
-                  <Input value={projectsCompleted} onChange={(e) => setProjectsCompleted(e.target.value)} placeholder="Number" />
-                </div>
-                <p className="text-sm text-muted-foreground">Brief details and images of your most recent projects (up to 5 images) – upload placeholder</p>
-                <h3 className="text-lg font-semibold text-foreground mt-6">Execution Approach & Capacity</h3>
-                <div>
-                  <Label className="mb-2 block">Team structure: In-house team or subcontractors? If subcontractors, scope outsourced:</Label>
-                  <RadioGroup value={teamType} onValueChange={(v) => setTeamType(v as "in-house" | "subcontractors")} className="space-y-2 mb-3">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="in-house" id="jv-inhouse" />
-                      <Label htmlFor="jv-inhouse" className="font-normal cursor-pointer">In-house</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="subcontractors" id="jv-sub" />
-                      <Label htmlFor="jv-sub" className="font-normal cursor-pointer">Subcontractors</Label>
-                    </div>
-                  </RadioGroup>
-                  {teamType === "subcontractors" && (
-                    <div className="space-y-2 pl-4">
-                      {SUBCONTRACTOR_SCOPES.map((s) => (
-                        <div key={s} className="flex items-center space-x-2">
-                          <Checkbox id={`jvsub-${s}`} checked={subcontractorScopes.includes(s)} onCheckedChange={() => toggleSub(s)} />
-                          <Label htmlFor={`jvsub-${s}`} className="font-normal cursor-pointer text-sm">{s}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label className="mb-2 block">Typical project size handled</Label>
-                  <Select value={typicalSize} onValueChange={setTypicalSize}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      {TYPICAL_SIZE_OPTIONS.map((o) => (
-                        <SelectItem key={o} value={o}>{o}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="mb-2 block">Have you commenced any RERA-registered projects?</Label>
-                  <RadioGroup value={reraYesNo} onValueChange={(v) => setReraYesNo(v as "yes" | "no")} className="space-y-2 flex flex-row gap-4">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="rera-yes" />
-                      <Label htmlFor="rera-yes" className="font-normal cursor-pointer">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="rera-no" />
-                      <Label htmlFor="rera-no" className="font-normal cursor-pointer">No</Label>
-                    </div>
-                  </RadioGroup>
-                  {reraYesNo === "yes" && (
-                    <Input className="mt-2" placeholder="How many?" value={reraProjects} onChange={(e) => setReraProjects(e.target.value)} />
-                  )}
-                </div>
-                <div>
-                  <Label className="mb-2 block">Typical size of projects you handle? (Reference only)</Label>
+                )}
+
+                {activeSectionId === "scale" && (
+                <div className="space-y-6">
+                  <p className="text-sm text-muted-foreground">To help us understand your project experience, could you kindly indicate the typical size of projects you handle?</p>
                   <Select value={projectScale} onValueChange={setProjectScale}>
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
@@ -222,54 +500,65 @@ const BuilderJointVenture = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-sm text-muted-foreground">Details and images for up to 3 of your most recently completed projects (name/location, built-up sft, type, duration, up to 2 images each) – form fields / upload placeholder</p>
-                <div>
-                  <Label className="mb-2 block">Which locations are you most comfortable undertaking a JV/JD project in? (Multiple areas with radius)</Label>
-                  <div className="space-y-3">
-                    <div className="flex gap-2 flex-wrap items-center">
-                      <Input placeholder="Location 1" value={location1} onChange={(e) => setLocation1(e.target.value)} className="flex-1 min-w-[120px]" />
-                      <Input type="number" placeholder="Radius (km)" value={radius1} onChange={(e) => setRadius1(e.target.value)} className="w-24" />
-                    </div>
-                    <div className="flex gap-2 flex-wrap items-center">
-                      <Input placeholder="Location 2" value={location2} onChange={(e) => setLocation2(e.target.value)} className="flex-1 min-w-[120px]" />
-                      <Input type="number" placeholder="Radius (km)" value={radius2} onChange={(e) => setRadius2(e.target.value)} className="w-24" />
-                    </div>
-                    <div className="flex gap-2 flex-wrap items-center">
-                      <Input placeholder="Location 3" value={location3} onChange={(e) => setLocation3(e.target.value)} className="flex-1 min-w-[120px]" />
-                      <Input type="number" placeholder="Radius (km)" value={radius3} onChange={(e) => setRadius3(e.target.value)} className="w-24" />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <Label className="mb-2 block">What size of team do you typically deploy for your projects?</Label>
-                  <Select value={teamSize} onValueChange={setTeamSize}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      {TEAM_SIZE_OPTIONS.map((o) => (
-                        <SelectItem key={o} value={o}>{o}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="mb-2 block">Which type of arrangement do you usually follow in JV/JD projects? (Select all that apply)</Label>
-                  <div className="space-y-2">
-                    {JV_ARRANGEMENT_OPTIONS.map((j) => (
-                      <div key={j} className="flex items-center space-x-2">
-                        <Checkbox id={`jv-${j.slice(0, 20)}`} checked={jvArrangements.includes(j)} onCheckedChange={() => toggleJv(j)} />
-                        <Label htmlFor={`jv-${j.slice(0, 20)}`} className="font-normal cursor-pointer text-sm">{j}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                )}
 
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" onClick={() => setStep("brief")}>Back</Button>
-                <Button size="lg" onClick={() => setStep("done")} disabled={!companyName.trim() || !yearsExperience.trim() || !address.trim() || projectCaps.length === 0}>
-                  Submit
-                </Button>
-              </div>
+                {activeSectionId === "location" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Which locations are you comfortable undertaking a JV/JD project in? (Location + Radius in km, multiple entries allowed)</Label>
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <CityAreaInput placeholder="Location 1" value={location1} onChange={setLocation1} className="flex-1 min-w-[120px]" />
+                        <Input type="number" placeholder="Radius (km)" value={radius1} onChange={(e) => setRadius1(e.target.value)} className="w-24" />
+                      </div>
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <CityAreaInput placeholder="Location 2" value={location2} onChange={setLocation2} className="flex-1 min-w-[120px]" />
+                        <Input type="number" placeholder="Radius (km)" value={radius2} onChange={(e) => setRadius2(e.target.value)} className="w-24" />
+                      </div>
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <CityAreaInput placeholder="Location 3" value={location3} onChange={setLocation3} className="flex-1 min-w-[120px]" />
+                        <Input type="number" placeholder="Radius (km)" value={radius3} onChange={(e) => setRadius3(e.target.value)} className="w-24" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "team" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">What size of team do you typically deploy?</Label>
+                    <Select value={teamSize} onValueChange={setTeamSize}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {TEAM_SIZE_OPTIONS.map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                )}
+
+                {activeSectionId === "arrangement" && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Which type of arrangement do you usually follow? (Select all that apply)</Label>
+                    <div className="space-y-2">
+                      {JV_ARRANGEMENT_OPTIONS.map((j) => (
+                        <div key={j} className="flex items-center space-x-2">
+                          <Checkbox id={`jv-${j}`} checked={jvArrangements.includes(j)} onCheckedChange={() => toggleJv(j)} />
+                          <Label htmlFor={`jv-${j}`} className="font-normal cursor-pointer text-sm">{j}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                )}
+
+              </StepFormLayout>
+
+              {submitError && <p className="text-destructive text-sm mt-4">{submitError}</p>}
             </motion.div>
           )}
 

@@ -23,7 +23,7 @@ DATABASE_URL=mysql+aiomysql://admin:Critical%232025@critical-classes.cnq64ucw4he
 # JWT Authentication
 JWT_SECRET_KEY=your-secret-key-min-32-chars-long-change-in-production
 JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=120
 JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # Razorpay

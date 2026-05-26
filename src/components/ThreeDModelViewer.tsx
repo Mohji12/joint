@@ -11,6 +11,13 @@ type ThreeDModelViewerProps = {
   transparent?: boolean;
   /** Optional: id for the model-viewer element (e.g. for orbit polling) */
   id?: string;
+  /** When true: orbit (rotate) only — no pan or zoom; camera distance/angle locked */
+  rotateOnly?: boolean;
+  /**
+   * Starting camera orbit: "theta phi radius" (e.g. "38deg 72deg 105%").
+   * Auto-rotate and drag begin from this view when rotateOnly is set.
+   */
+  initialCameraOrbit?: string;
 };
 
 /**
@@ -25,7 +32,34 @@ type ThreeDModelViewerProps = {
  *    className="w-full h-[400px]"
  *  />
  */
-const ThreeDModelViewer = ({ src, alt, className, transparent, id }: ThreeDModelViewerProps) => {
+type ModelViewerElement = HTMLElement & {
+  cameraOrbit?: string;
+  minCameraOrbit?: string;
+  maxCameraOrbit?: string;
+  jumpCameraToGoal?: () => void;
+};
+
+/** Parse "theta phi radius" → locked min/max (horizontal spin only). */
+function rotateOnlyOrbitBounds(initialOrbit: string): { min: string; max: string } {
+  const parts = initialOrbit.trim().split(/\s+/);
+  const phi = parts[1] ?? "72deg";
+  const radius = parts[2] ?? "105%";
+  const locked = `auto ${phi} ${radius}`;
+  return { min: locked, max: locked };
+}
+
+const ThreeDModelViewer = ({
+  src,
+  alt,
+  className,
+  transparent,
+  id,
+  rotateOnly = false,
+  initialCameraOrbit,
+}: ThreeDModelViewerProps) => {
+  const orbitBounds =
+    rotateOnly && initialCameraOrbit ? rotateOnlyOrbitBounds(initialCameraOrbit) : null;
+
   // Dynamically load the model-viewer script once on the client
   useEffect(() => {
     const existing = document.querySelector<HTMLScriptElement>(
@@ -44,6 +78,32 @@ const ThreeDModelViewer = ({ src, alt, className, transparent, id }: ThreeDModel
     };
   }, []);
 
+  // Apply starting view after the GLB loads so auto-rotate begins from that angle.
+  useEffect(() => {
+    if (!id || !initialCameraOrbit) return;
+
+    const bounds = rotateOnly ? rotateOnlyOrbitBounds(initialCameraOrbit) : null;
+
+    const applyInitialOrbit = () => {
+      const el = document.getElementById(id) as ModelViewerElement | null;
+      if (!el) return;
+      el.cameraOrbit = initialCameraOrbit;
+      if (bounds) {
+        el.minCameraOrbit = bounds.min;
+        el.maxCameraOrbit = bounds.max;
+      }
+      el.jumpCameraToGoal?.();
+    };
+
+    const el = document.getElementById(id) as ModelViewerElement | null;
+    if (!el) return;
+
+    el.addEventListener("load", applyInitialOrbit);
+    applyInitialOrbit();
+
+    return () => el.removeEventListener("load", applyInitialOrbit);
+  }, [id, initialCameraOrbit, rotateOnly]);
+
   return (
     <model-viewer
       id={id}
@@ -52,7 +112,14 @@ const ThreeDModelViewer = ({ src, alt, className, transparent, id }: ThreeDModel
       class={className}
       camera-controls
       auto-rotate
-      disable-zoom={false}
+      {...(initialCameraOrbit && { "camera-orbit": initialCameraOrbit })}
+      {...(rotateOnly && {
+        "disable-pan": true,
+        "disable-zoom": true,
+        "min-camera-orbit": orbitBounds?.min ?? "auto 72deg 105%",
+        "max-camera-orbit": orbitBounds?.max ?? "auto 72deg 105%",
+        "interaction-prompt": "none",
+      })}
       exposure="1"
       shadow-intensity="0.5"
       shadow-softness="1"
@@ -60,6 +127,7 @@ const ThreeDModelViewer = ({ src, alt, className, transparent, id }: ThreeDModel
         width: "100%",
         height: "100%",
         display: "block",
+        touchAction: rotateOnly ? "none" : undefined,
         ...(transparent && { backgroundColor: "transparent" }),
       }}
     />
@@ -80,7 +148,12 @@ declare global {
         alt?: string;
         "camera-controls"?: boolean;
         "auto-rotate"?: boolean;
+        "camera-orbit"?: string;
+        "disable-pan"?: boolean;
         "disable-zoom"?: boolean;
+        "min-camera-orbit"?: string;
+        "max-camera-orbit"?: string;
+        "interaction-prompt"?: "auto" | "none";
         exposure?: string;
         "shadow-intensity"?: string;
         "shadow-softness"?: string;

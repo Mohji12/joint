@@ -55,7 +55,7 @@ const faqs = [
           <li>Regulatory alignment (FAR, zoning, RERA-readiness)</li>
         </ul>
         <p className="mt-3">
-          This helps reduce uncertainty early — but it does not replace independent due diligence.
+          This helps reduce uncertainty early   but it does not replace independent due diligence.
         </p>
       </>
     ),
@@ -107,7 +107,7 @@ const faqs = [
     answer: (
       <>
         <p className="mb-3">
-          <strong>Absolutely — and this is critical.</strong>
+          <strong>Absolutely   and this is critical.</strong>
         </p>
         <p className="mb-2">
           Jointlly strongly recommends that all users conduct independent background verification, including:
@@ -147,7 +147,7 @@ const faqs = [
         <ul className="list-disc pl-5 space-y-1 text-muted-foreground mb-3">
           <li>Contract construction</li>
           <li>Joint Ventures / Joint Development</li>
-          <li>Reconstruction and structural repair</li>
+          <li>Renovation/Repaint and structural repair</li>
           <li>Interior architecture</li>
         </ul>
         <p>
@@ -165,7 +165,7 @@ const faqs = [
           Referrals and portals rely on trust by association.
         </p>
         <p>
-          Jointlly introduces structure, screening, and transparency — so decisions are based on information, not hope.
+          Jointlly introduces structure, screening, and transparency   so decisions are based on information, not hope.
         </p>
       </>
     ),
@@ -176,22 +176,22 @@ const FAQ = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/70 via-green-50/60 to-teal-50/70" />
-      <div className="absolute inset-0 jointlly-grid opacity-40" />
-      <div className="relative z-10 pt-24 md:pt-28 pb-16 md:pb-24">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-16 md:pb-24">
+        <div className="absolute inset-0 bg-background" />
+        <div className="absolute inset-0 jointlly-grid opacity-40" />
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
               <span className="text-gradient-primary">Frequently Asked</span>
               <br />
               <span className="text-foreground">Questions</span>
             </h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
               Clear answers about Jointlly, verification, and how we support your decisions.
             </p>
           </motion.div>
@@ -244,7 +244,7 @@ const FAQ = () => {
             </p>
           </motion.div>
         </div>
-      </div>
+      </section>
       <Footer />
     </div>
   );

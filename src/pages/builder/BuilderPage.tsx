@@ -26,8 +26,8 @@ const options = [
   },
   {
     id: "reconstruction",
-    title: "Reconstruction, repair work, painter",
-    description: "Repair, renovate, or paint existing structures—maintenance, upgrades, or refurbishments.",
+    title: "Renovation/Repaint, repair work, painter",
+    description: "Repair, renovate, or paint existing structures maintenance, upgrades, or refurbishments.",
     icon: Wrench,
     path: "/builder/reconstruction",
   },
@@ -35,10 +35,10 @@ const options = [
 
 const BuilderPage = () => {
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <section className="relative py-32 overflow-hidden">
+    <div className="w-full overflow-x-hidden">
+      <section className="relative py-6 sm:py-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background" />
-        <div className="relative z-10 max-w-5xl mx-auto px-6">
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
           <div className="flex items-center gap-4 mb-12">
             <Link
               to="/"
@@ -64,9 +64,6 @@ const BuilderPage = () => {
               <span className="text-foreground">Construction Company</span>
               <span className="text-gradient-primary"> / Builder</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-              Since this side of the business represents the primary revenue cycle, we are precise about which data we collect first, ensuring every data point is structured in the correct sequence and aligned with landowner requirements.
-            </p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

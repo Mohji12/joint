@@ -1,38 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Hammer, Handshake, Palette, Wrench, Edit, Calendar, MapPin, Calculator, ChevronDown, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-
-const TYPE_ICONS = {
-  "contract-construction": Hammer,
-  "joint-venture": Handshake,
-  "interior": Palette,
-  "reconstruction": Wrench,
-};
-
-const TYPE_LABELS = {
-  "contract-construction": "Contract Construction",
-  "joint-venture": "Joint Venture / JD",
-  "interior": "Interior Architecture",
-  "reconstruction": "Reconstruction / Repair",
-};
-
-const TYPE_PATHS = {
-  "contract-construction": "/landowner/contract-construction",
-  "joint-venture": "/landowner/joint-venture",
-  "interior": "/landowner/interior",
-  "reconstruction": "/landowner/reconstruction",
-};
-
-const TYPE_COLORS = {
-  "contract-construction": "bg-green-500",
-  "joint-venture": "bg-green-600",
-  "interior": "bg-green-500",
-  "reconstruction": "bg-green-600",
-};
+import { LandownerProjectCard } from "@/components/LandownerProjectCard";
 
 const LandownerMyProjects = () => {
   const [projects, setProjects] = useState<any[]>([]);
@@ -66,21 +38,20 @@ const LandownerMyProjects = () => {
   }, [propertyType, verified, projects]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="w-full">
       {/* Professional Header */}
       <header className="bg-black text-white border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto w-full py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
               <Link to="/" className="text-xl font-bold">Jointlly</Link>
               <nav className="hidden md:flex items-center gap-6">
                 <Link to="/landowner/dashboard" className="text-sm font-medium hover:text-green-400 transition-colors">Dashboard</Link>
                 <Link to="/landowner/my-projects" className="text-sm font-medium text-green-400">My Projects</Link>
-                <Link to="/landowner/options" className="text-sm font-medium hover:text-green-400 transition-colors">New Request</Link>
               </nav>
             </div>
             <Link to="/landowner/dashboard">
-              <Button variant="outline" className="bg-transparent border-white text-white hover:bg-gray-800">
+              <Button variant="outline" className="border-primary-foreground/60 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
@@ -89,7 +60,7 @@ const LandownerMyProjects = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto w-full py-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2">My Projects</h1>
@@ -115,7 +86,7 @@ const LandownerMyProjects = () => {
                       <SelectItem value="contract-construction">Contract Construction</SelectItem>
                       <SelectItem value="joint-venture">Joint Venture</SelectItem>
                       <SelectItem value="interior">Interior</SelectItem>
-                      <SelectItem value="reconstruction">Reconstruction</SelectItem>
+                      <SelectItem value="reconstruction">Renovation/Repaint</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -152,80 +123,16 @@ const LandownerMyProjects = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
                 <p className="text-gray-600 mb-4">No projects found</p>
                 <Link to="/landowner/options">
-                  <Button className="bg-black text-white hover:bg-gray-800">
+                  <Button className="btn-premium">
                     Create New Project
                   </Button>
                 </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProjects.map((project, index) => {
-                  const Icon = TYPE_ICONS[project.type as keyof typeof TYPE_ICONS] || Hammer;
-                  const label = TYPE_LABELS[project.type as keyof typeof TYPE_LABELS] || project.type;
-                  const path = TYPE_PATHS[project.type as keyof typeof TYPE_PATHS] || "/landowner/dashboard";
-                  const color = TYPE_COLORS[project.type as keyof typeof TYPE_COLORS] || "bg-green-500";
-                  
-                  return (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-shadow group"
-                    >
-                      {/* Project Image */}
-                      <div className={`h-48 ${color} flex items-center justify-center relative`}>
-                        <Icon className="w-16 h-16 text-white opacity-80" />
-                        {project.pidValidation && (
-                          <div className="absolute top-3 right-3 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                            Verified
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Project Details */}
-                      <div className="p-5">
-                        <h3 className="font-semibold text-black text-lg mb-2">{label}</h3>
-                        
-                        {project.propertyLocation && (
-                          <div className="flex items-start gap-2 mb-3">
-                            <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                            <p className="text-sm text-gray-600">
-                              {project.propertyLocation.city}, {project.propertyLocation.ward}
-                            </p>
-                          </div>
-                        )}
-                        
-                        {project.propertyDetails && (
-                          <div className="space-y-1 mb-4 text-xs text-gray-500">
-                            <p><span className="font-medium">Size:</span> {project.propertyDetails.dimensions}</p>
-                            <p><span className="font-medium">Facing:</span> {project.propertyDetails.facing}</p>
-                            {project.far && (
-                              <div className="flex items-center gap-1">
-                                <Calculator className="w-3 h-3" />
-                                <span><span className="font-medium">FAR:</span> {project.far}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {project.submittedAt && (
-                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(project.submittedAt).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                        
-                        <Link to={path}>
-                          <Button variant="outline" className="w-full group-hover:bg-black group-hover:text-white transition-colors">
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Project
-                          </Button>
-                        </Link>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                {filteredProjects.map((project, index) => (
+                  <LandownerProjectCard key={index} project={project} index={index} variant="default" />
+                ))}
               </div>
             )}
           </div>

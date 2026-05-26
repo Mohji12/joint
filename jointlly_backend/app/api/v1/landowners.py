@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.dependencies import require_landowner
+from app.dependencies import require_landowner, require_landowner_entry_paid
 from app.models.user import User
 from app.schemas.landowner import (
     LandownerProfileCreate,
@@ -20,6 +20,7 @@ from app.schemas.landowner import (
     JVPreferencesResponse
 )
 from app.services.landowner_service import LandownerService
+from app.exceptions import NotFoundError
 
 router = APIRouter(prefix="/landowners", tags=["Landowners"])
 
@@ -71,7 +72,7 @@ async def update_profile(
 @router.post("/properties", response_model=PropertyResponse, status_code=status.HTTP_201_CREATED)
 async def create_property(
     property_data: PropertyCreate,
-    current_user: User = Depends(require_landowner),
+    current_user: User = Depends(require_landowner_entry_paid),
     db: AsyncSession = Depends(get_db)
 ):
     """Create property"""
@@ -92,7 +93,11 @@ async def list_properties(
     db: AsyncSession = Depends(get_db)
 ):
     """List all properties"""
-    profile = await LandownerService.get_profile(db, current_user.id)
+    try:
+        profile = await LandownerService.get_profile(db, current_user.id)
+    except NotFoundError:
+        # New landowners may not have created profile yet.
+        return []
     properties = await LandownerService.list_properties(db, profile.id)
     return properties
 
@@ -109,10 +114,25 @@ async def get_property(
     return property_obj
 
 
+@router.get("/projects", response_model=List[ProjectResponse])
+async def list_projects(
+    current_user: User = Depends(require_landowner),
+    db: AsyncSession = Depends(get_db)
+):
+    """List all projects for the current landowner"""
+    try:
+        profile = await LandownerService.get_profile(db, current_user.id)
+    except NotFoundError:
+        # New landowners may not have created profile yet.
+        return []
+    projects = await LandownerService.list_projects(db, profile.id)
+    return projects
+
+
 @router.post("/projects", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
     project_data: ProjectCreate,
-    current_user: User = Depends(require_landowner),
+    current_user: User = Depends(require_landowner_entry_paid),
     db: AsyncSession = Depends(get_db)
 ):
     """Create project"""
@@ -126,7 +146,9 @@ async def create_project(
         project_data.project_type,
         project_data.intent,
         project_data.timeline,
-        project_data.scope
+        project_data.scope,
+        asset_class=project_data.asset_class,
+        budget_tier=project_data.budget_tier,
     )
     return project
 
@@ -146,7 +168,7 @@ async def get_project(
 @router.post("/projects/{project_id}/publish", response_model=ProjectResponse)
 async def publish_project(
     project_id: UUID,
-    current_user: User = Depends(require_landowner),
+    current_user: User = Depends(require_landowner_entry_paid),
     db: AsyncSession = Depends(get_db)
 ):
     """Publish project (triggers matching)"""
@@ -164,7 +186,7 @@ async def publish_project(
 async def create_jv_preferences(
     project_id: UUID,
     preferences_data: JVPreferencesCreate,
-    current_user: User = Depends(require_landowner),
+    current_user: User = Depends(require_landowner_entry_paid),
     db: AsyncSession = Depends(get_db)
 ):
     """Create or update JV preferences"""

@@ -5,7 +5,7 @@ from uuid import uuid4
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Integer, Float, Boolean, Text, DateTime,
-    ForeignKey, Enum as SQLEnum, ARRAY
+    ForeignKey, Enum as SQLEnum, JSON
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -72,11 +72,14 @@ class Property(Base):
     ward = Column(String(100), nullable=True)
     landmark = Column(String(255), nullable=True)
     google_maps_pin = Column(String(500), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     width_ft = Column(Float, nullable=True)
     length_ft = Column(Float, nullable=True)
     facing = Column(String(50), nullable=True)
     is_corner_plot = Column(Boolean, default=False, nullable=False)
-    facings = Column(ARRAY(String), nullable=True)  # For corner plots
+    # Stored as JSON array for MySQL/Postgres compatibility (for corner plots)
+    facings = Column(JSON, nullable=True)
     road_width_ft = Column(Float, nullable=True)
     khatha_type = Column(String(100), nullable=True)
     e_khatha_status = Column(String(100), nullable=True)
@@ -134,6 +137,8 @@ class Project(Base):
         SQLEnum(ProjectIntent, name="project_intent"),
         nullable=True
     )
+    asset_class = Column(String(50), nullable=True, index=True)  # e.g. RESIDENTIAL_VILLA, COMMERCIAL_OFFICE
+    budget_tier = Column(String(20), nullable=True)  # BASIC, STANDARD, LUXURY
     timeline = Column(String(100), nullable=True)
     scope = Column(Text, nullable=True)
     status = Column(
