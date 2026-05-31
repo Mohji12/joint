@@ -91,6 +91,10 @@ class Settings(BaseSettings):
     app_version: str = Field(default="1.0.0")
     debug: bool = Field(default=False, description="Debug mode")
     environment: str = Field(default="production", description="Environment")
+    allow_direct_builder_connect: bool = Field(
+        default=False,
+        description="Skip Razorpay and connect builder to project directly (dev/staging)",
+    )
 
     cors_origins: Optional[str] = Field(default=None, description="Ignored - CORS handled in main.py")
 

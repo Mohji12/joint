@@ -19,6 +19,8 @@ type StepFormLayoutProps = {
   onNext?: () => void;
   onSubmit?: () => void;
   submitLabel?: string;
+  /** Shown on the submit button while `isSubmitting` is true (defaults to "Submitting…"). */
+  submittingLabel?: string;
   submitDisabled?: boolean;
   isSubmitting?: boolean;
   className?: string;
@@ -40,6 +42,7 @@ export function StepFormLayout({
   onNext,
   onSubmit,
   submitLabel = "Submit",
+  submittingLabel = "Submitting…",
   submitDisabled = false,
   isSubmitting = false,
   className,
@@ -113,7 +116,7 @@ export function StepFormLayout({
                 onClick={onSubmit}
                 disabled={submitDisabled || isSubmitting}
               >
-                {isSubmitting ? "Submitting…" : submitLabel}
+                {isSubmitting ? submittingLabel : submitLabel}
               </Button>
             )}
           </div>

@@ -3,6 +3,8 @@ import { FolderSearch, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   confirmBuilderSelect,
+  confirmBuilderSelectDirect,
+  ensureProjectMatch,
   getBuilderPortfolioLatest,
   getProfessionalMatches,
   getProjectMarketplace,
@@ -89,6 +91,22 @@ function ensureRazorpayScript(): Promise<void> {
   });
 
   return razorpayScriptPromise;
+}
+
+function isPaymentUnavailableError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return /razorpay|payment gateway|not configured|failed to create razorpay/i.test(msg);
+}
+
+function isDirectConnectForbidden(error: unknown): boolean {
+  const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return msg.includes("direct builder connect is only available");
+}
+
+function normalizeMatchPercent(score: number | undefined | null): number {
+  if (score == null || Number.isNaN(score)) return 0;
+  const raw = score <= 1 ? score * 100 : score;
+  return Math.max(0, Math.min(100, Math.round(raw)));
 }
 
 function normalizeText(value: unknown) {
@@ -229,6 +247,7 @@ export default function BuilderMarketplace() {
   const [error, setError] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
+  const [dialogError, setDialogError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -249,7 +268,7 @@ export default function BuilderMarketplace() {
           setAutoTypeSet(true);
         }
         const [matchRows, projectRows] = await Promise.all([
-          getProfessionalMatches(profile.id, 20),
+          getProfessionalMatches(profile.id, 200),
           getProjectMarketplace({
             page: 1,
             page_size: 100,
@@ -306,85 +325,126 @@ export default function BuilderMarketplace() {
 
   const sizeFilterMid = (clientFilters.sizeMin + clientFilters.sizeMax) / 2;
   const selectedMatch = selectedProjectId ? matchByProjectId.get(selectedProjectId) : undefined;
-  const selectedMatchPercent = Math.max(
-    0,
-    Math.min(100, Math.round(((selectedMatch?.match_score ?? 0) <= 1 ? (selectedMatch?.match_score ?? 0) * 100 : (selectedMatch?.match_score ?? 0))))
-  );
+  const selectedMatchPercent = normalizeMatchPercent(selectedMatch?.match_score);
 
-  const handleClearFilters = () => {
-    setConstructionTypeFilter("");
-    setClientFilters(defaultClientFilters());
+  const finishBuilderAccept = (updatedMatch: MatchResponse, emailDispatched: boolean) => {
+    setMatches((prev) => {
+      const exists = prev.some((m) => m.id === updatedMatch.id);
+      if (exists) {
+        return prev.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
+      }
+      return [updatedMatch, ...prev];
+    });
+    setSelectedProjectId(null);
+    setDialogError(null);
+    if (!emailDispatched) {
+      setError(
+        "Project accepted, but contact-sharing email could not be sent. Please check backend SMTP settings/logs."
+      );
+    }
+    navigate("/builder/account/projects");
   };
 
   const handlePayAndConnect = async () => {
     if (!selectedProjectId) return;
+    const projectId = selectedProjectId;
     try {
       setIsPaying(true);
-      const match = matchByProjectId.get(selectedProjectId);
+      setDialogError(null);
+      let match = matchByProjectId.get(selectedProjectId);
       if (!match) {
-        throw new Error("Unable to find match for selected project.");
-      }
-
-      const initiated = await initiateBuilderSelect(match.id);
-      if (!initiated.razorpay_key_id) {
-        throw new Error("Payment gateway key is unavailable. Please contact support.");
-      }
-
-      await ensureRazorpayScript();
-      if (!window.Razorpay) {
-        throw new Error("Razorpay SDK not available. Please refresh and try again.");
-      }
-
-      const paymentResponse = await new Promise<RazorpaySuccessPayload>((resolve, reject) => {
-        const rz = new window.Razorpay({
-          key: initiated.razorpay_key_id,
-          amount: Math.round(initiated.amount * 100),
-          currency: initiated.currency,
-          name: "Jointlly",
-          description: `Builder connect fee (match ${selectedMatchPercent}%)`,
-          order_id: initiated.order_id,
-          handler: resolve,
-          theme: { color: "#F3B24A" },
-          modal: {
-            ondismiss: () => reject(new Error("Payment cancelled by user.")),
-          },
-        });
-        rz.open();
-      });
-
-      // Validate order id matches the initiated order.
-      if (paymentResponse.razorpay_order_id !== initiated.order_id) {
-        throw new Error("Payment order mismatch. Please try again.");
-      }
-
-      await verifyPaymentTransaction({
-        transaction_id: initiated.transaction_id,
-        razorpay_payment_id: paymentResponse.razorpay_payment_id,
-        razorpay_signature: paymentResponse.razorpay_signature,
-      });
-
-      const event = await confirmBuilderSelect(match.id, initiated.transaction_id);
-      const updatedMatch = event.match;
-      setMatches((prev) => {
-        const exists = prev.some((m) => m.id === updatedMatch.id);
-        if (exists) {
-          return prev.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
-        }
-        return [updatedMatch, ...prev];
-      });
-      setSelectedProjectId(null);
-      if (!event.email_dispatched) {
-        setError(
-          "Project selected, but contact-sharing email could not be sent. Please check backend SMTP settings/logs."
+        match = await ensureProjectMatch(selectedProjectId);
+        setMatches((prev) =>
+          prev.some((m) => m.id === match!.id) ? prev.map((m) => (m.id === match!.id ? match! : m)) : [match!, ...prev]
         );
+      }
+
+      if (match.express_interest_builder) {
+        setSelectedProjectId(null);
+        navigate("/builder/account/projects");
         return;
       }
-      navigate("/builder/account/projects");
+
+      const runDirectAccept = async () => {
+        const event = await confirmBuilderSelectDirect(match!.id);
+        finishBuilderAccept(event.match, event.email_dispatched);
+      };
+
+      // Prefer direct connect when backend allows it (local/dev without mandatory Razorpay).
+      try {
+        await runDirectAccept();
+        return;
+      } catch (directError) {
+        if (!isDirectConnectForbidden(directError) && !isPaymentUnavailableError(directError)) {
+          throw directError;
+        }
+      }
+
+      try {
+        const initiated = await initiateBuilderSelect(match.id);
+        const keyId = initiated.razorpay_key_id ?? "";
+        if (!keyId || keyId.toLowerCase().includes("dummy")) {
+          await runDirectAccept();
+          return;
+        }
+
+        // Close our dialog so Razorpay checkout is not hidden behind it.
+        setSelectedProjectId(null);
+
+        await ensureRazorpayScript();
+        if (!window.Razorpay) {
+          throw new Error("Razorpay SDK not available. Please refresh and try again.");
+        }
+
+        const matchPercent = normalizeMatchPercent(initiated.match?.match_score ?? match.match_score);
+
+        const paymentResponse = await new Promise<RazorpaySuccessPayload>((resolve, reject) => {
+          const rz = new window.Razorpay!({
+            key: keyId,
+            amount: Math.round(initiated.amount * 100),
+            currency: initiated.currency,
+            name: "Jointlly",
+            description: `Builder connect fee (match ${matchPercent}%)`,
+            order_id: initiated.order_id,
+            handler: resolve,
+            theme: { color: "#F3B24A" },
+            modal: {
+              ondismiss: () => reject(new Error("Payment cancelled. Complete payment to accept this project.")),
+            },
+          });
+          rz.open();
+        });
+
+        if (paymentResponse.razorpay_order_id !== initiated.order_id) {
+          throw new Error("Payment order mismatch. Please try again.");
+        }
+
+        await verifyPaymentTransaction({
+          transaction_id: initiated.transaction_id,
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+        });
+
+        const event = await confirmBuilderSelect(match.id, initiated.transaction_id);
+        finishBuilderAccept(event.match, event.email_dispatched);
+      } catch (initError) {
+        if (isPaymentUnavailableError(initError)) {
+          await runDirectAccept();
+          return;
+        }
+        throw initError;
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to complete payment selection");
+      setDialogError(e instanceof Error ? e.message : "Failed to accept project");
+      setSelectedProjectId(projectId);
     } finally {
       setIsPaying(false);
     }
+  };
+
+  const handleClearFilters = () => {
+    setConstructionTypeFilter("");
+    setClientFilters(defaultClientFilters());
   };
 
   return (
@@ -450,6 +510,7 @@ export default function BuilderMarketplace() {
         onOpenChange={(open) => {
           if (!open) {
             setSelectedProjectId(null);
+            setDialogError(null);
           }
         }}
       >
@@ -462,6 +523,11 @@ export default function BuilderMarketplace() {
               On successful payment, contact-sharing emails will be sent to both registered email addresses.
             </DialogDescription>
           </DialogHeader>
+          {dialogError ? (
+            <p className="text-sm text-destructive rounded-md border border-destructive/30 bg-destructive/5 p-3">
+              {dialogError}
+            </p>
+          ) : null}
           <DialogFooter>
             <Button
               variant="outline"

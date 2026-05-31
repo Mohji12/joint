@@ -21,10 +21,24 @@ from app.services.landowner_service import LandownerService
 from app.services.professional_service import ProfessionalService
 from app.services.matching_service import MatchingService
 from app.services.payment_service import PaymentService
+from app.config import settings
 from app.utils.constants import Role, TransactionType
 
 router = APIRouter(prefix="/matching", tags=["Matching"])
 payment_service = PaymentService()
+
+
+def _allow_direct_builder_connect() -> bool:
+    """Skip Razorpay in local/dev when keys are missing, placeholder, or explicitly allowed."""
+    if settings.allow_direct_builder_connect:
+        return True
+    key_id = (settings.razorpay_key_id or "").strip()
+    key_secret = (settings.razorpay_key_secret or "").strip()
+    if not key_id or not key_secret:
+        return True
+    if "dummy" in key_id.lower():
+        return True
+    return bool(settings.debug or settings.environment == "development")
 
 
 async def _ensure_project_owned_by_user(db: AsyncSession, project_id: UUID, user_id: UUID) -> None:
@@ -85,6 +99,20 @@ async def get_professional_matches(
     return matches
 
 
+@router.post("/projects/{project_id}/ensure-match", response_model=MatchResponse)
+async def ensure_project_match(
+    project_id: UUID,
+    current_user: User = Depends(require_authenticated),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create (or return) a match row for the current builder and project."""
+    if current_user.role != Role.PROFESSIONAL:
+        raise ForbiddenError("Only professionals can ensure project matches.")
+    profile = await ProfessionalService.get_profile(db, current_user.id)
+    match = await MatchingService.ensure_match_for_professional(db, project_id, profile.id)
+    return MatchResponse.model_validate(match)
+
+
 @router.post("/matches/{match_id}/accept", response_model=MatchResponse)
 async def accept_match(
     match_id: UUID,
@@ -127,6 +155,31 @@ async def landowner_select_match(
     return MatchConnectionEventResponse(
         match=MatchResponse.model_validate(updated),
         selection_side="landowner",
+        payment_required=False,
+        payment_status=None,
+        payment_transaction_id=None,
+        email_dispatched=email_dispatched,
+    )
+
+
+@router.post("/matches/{match_id}/builder-select-direct", response_model=MatchConnectionEventResponse)
+async def builder_select_direct(
+    match_id: UUID,
+    current_user: User = Depends(require_authenticated),
+    db: AsyncSession = Depends(get_db),
+):
+    """Dev/local fallback: accept project without Razorpay when keys are not configured."""
+    if not _allow_direct_builder_connect():
+        raise ForbiddenError("Direct builder connect is only available in development without Razorpay.")
+    match = await MatchingService.get_match_by_id(db, match_id)
+    _ensure_user_can_act_on_match(match, current_user.id)
+    if current_user.role != Role.PROFESSIONAL:
+        raise ForbiddenError("Only professionals can accept projects.")
+
+    updated, email_dispatched = await MatchingService.builder_express_interest_direct(db, match_id)
+    return MatchConnectionEventResponse(
+        match=MatchResponse.model_validate(updated),
+        selection_side="builder",
         payment_required=False,
         payment_status=None,
         payment_transaction_id=None,

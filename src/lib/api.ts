@@ -1579,6 +1579,16 @@ export async function getProfessionalMatches(
   return handleResponse<MatchResponse[]>(res);
 }
 
+/** Create or fetch match for current builder + marketplace project. */
+export async function ensureProjectMatch(projectId: string): Promise<MatchResponse> {
+  const base = getBaseUrl();
+  const res = await authFetch(`${base}/api/v1/matching/projects/${projectId}/ensure-match`, {
+    method: "POST",
+    headers: authHeader(),
+  });
+  return handleResponse<MatchResponse>(res);
+}
+
 export async function acceptMatch(matchId: string): Promise<MatchResponse> {
   const base = getBaseUrl();
   const res = await authFetch(
@@ -1658,6 +1668,16 @@ export async function confirmBuilderSelect(
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({ transaction_id: transactionId }),
+  });
+  return handleResponse<MatchConnectionEvent>(res);
+}
+
+/** Dev/local: accept project without Razorpay when backend allows direct connect. */
+export async function confirmBuilderSelectDirect(matchId: string): Promise<MatchConnectionEvent> {
+  const base = getBaseUrl();
+  const res = await authFetch(`${base}/api/v1/matching/matches/${matchId}/builder-select-direct`, {
+    method: "POST",
+    headers: authHeader(),
   });
   return handleResponse<MatchConnectionEvent>(res);
 }

@@ -867,7 +867,27 @@ class MatchingService:
             .limit(limit)
         )
         return list(result.scalars().all())
-    
+
+    @staticmethod
+    async def ensure_match_for_professional(
+        db: AsyncSession,
+        project_id: UUID,
+        professional_id: UUID,
+    ) -> Match:
+        """Return existing match or create one so builder can accept marketplace projects."""
+        existing_result = await db.execute(
+            select(Match).where(
+                and_(
+                    Match.project_id == project_id,
+                    Match.professional_id == professional_id,
+                )
+            )
+        )
+        existing = existing_result.scalar_one_or_none()
+        if existing:
+            return existing
+        return await MatchingService.create_match(db, project_id, professional_id)
+
     @staticmethod
     async def get_match_by_id(db: AsyncSession, match_id: UUID) -> Match:
         """Get a match by id with project (property, landowner) and professional loaded for ownership checks."""
@@ -1159,10 +1179,13 @@ class MatchingService:
         match_id: UUID,
     ) -> tuple[Match, bool]:
         """
-        Temporary no-payment builder connect flow.
+        No-payment builder connect flow (dev/local or when explicitly allowed).
         Marks both sides interested, connects match, and dispatches contact-sharing emails.
         """
         match = await MatchingService.get_match_by_id(db, match_id)
+        if match.express_interest_builder and match.status == MatchStatus.CONNECTED:
+            return match, False
+
         now = datetime.utcnow()
         changed = False
 

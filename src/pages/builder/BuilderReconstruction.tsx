@@ -324,7 +324,6 @@ const BuilderReconstruction = () => {
                 sections={SECTIONS}
                 activeSectionId={activeSectionId}
                 onePagePerSection
-                alwaysShowSubmit
                 onPrev={() => {
                   const idx = SECTIONS.findIndex((s) => s.id === activeSectionId);
                   if (idx <= 0) setStep("brief");
@@ -335,7 +334,8 @@ const BuilderReconstruction = () => {
                   if (idx < SECTIONS.length - 1) setActiveSectionId(SECTIONS[idx + 1].id);
                 }}
                 onSubmit={handleSubmit}
-                submitLabel="Save"
+                submitLabel="Publish to Opportunities"
+                submittingLabel="Publishing…"
                 submitDisabled={submitting}
                 isSubmitting={submitting}
               >
@@ -550,13 +550,13 @@ const BuilderReconstruction = () => {
 
           {step === "done" && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Thank you</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Profile Published!</h1>
               <div className="glass-card rounded-2xl p-6 md:p-8 border border-glass-border space-y-4">
                 <p className="text-foreground leading-relaxed">
-                  After collecting the required information, we assign a credibility score and align you with suitable landowners or property owners based on your location preferences, pricing range, and areas of expertise.
+                  Your renovation/repaint profile is now live on Opportunities. Landowners can discover your services based on your location preferences and pricing.
                 </p>
                 <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
-                  <p className="text-sm font-medium text-primary">Profile submitted</p>
+                  <p className="text-sm font-medium text-primary">Published to Opportunities</p>
                 </div>
               </div>
               <Button size="lg" onClick={() => navigate("/builder/dashboard")}>Go to Dashboard</Button>

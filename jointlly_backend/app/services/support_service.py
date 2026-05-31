@@ -10,11 +10,10 @@ This service uses:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
@@ -311,32 +310,18 @@ class SupportService:
         description: str,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> _CreatedTicket:
-        # Use SQL text insert to stay compatible with old DBs that may not yet
-        # have newly added nullable columns (e.g. assigned_to/admin_notes).
-        ticket_id = uuid4().hex
-        now = datetime.utcnow()
-        await db.execute(
-            text(
-                """
-                INSERT INTO support_tickets
-                (id, user_id, `role`, route, subject, description, status, metadata_json, created_at, updated_at)
-                VALUES
-                (:id, :user_id, :role, :route, :subject, :description, :status, :metadata_json, :created_at, :updated_at)
-                """
-            ),
-            {
-                "id": ticket_id,
-                "user_id": user_id,
-                "role": role,
-                "route": route,
-                "subject": subject,
-                "description": description,
-                "status": "open",
-                "metadata_json": metadata or {},
-                "created_at": now,
-                "updated_at": now,
-            },
+        ticket = SupportTicket(
+            id=uuid4().hex,
+            user_id=user_id,
+            role=role,
+            route=route,
+            subject=subject,
+            description=description or "",
+            status="open",
+            metadata_json=metadata or {},
         )
+        db.add(ticket)
         await db.commit()
-        return _CreatedTicket(id=ticket_id, status="open")
+        await db.refresh(ticket)
+        return _CreatedTicket(id=ticket.id, status=ticket.status)
 
